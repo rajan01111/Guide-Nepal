@@ -1,88 +1,554 @@
-<!doctype html><html lang="ne"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>Admin | Guide Nepal</title>
-<style>
-:root{--n:#0B2A4A;--b:#123F6D;--r:#D62828;--g:#F4B942}*{box-sizing:border-box}
-body{margin:0;font:16px/1.5 system-ui,sans-serif;background:#F7F9FC;color:#17212B}.w{max-width:900px;margin:auto;padding:12px}
-nav{background:var(--n);position:sticky;top:0;display:flex;overflow-x:auto;gap:2px;padding:6px}nav button{background:none;color:#fff;border:0;padding:10px 12px;white-space:nowrap;border-radius:6px}nav button.on{background:var(--b)}
-input,textarea,select{font:inherit;width:100%;padding:10px;border:1px solid #c5ced8;border-radius:8px;margin:4px 0 10px;background:#fff}
-button{font:inherit;background:var(--r);color:#fff;border:0;border-radius:8px;padding:10px 14px;cursor:pointer;min-height:42px}button.o{background:#fff;color:var(--b);border:1px solid var(--b)}button.s{padding:6px 10px;min-height:34px;font-size:14px}
-.c{background:#fff;border:1px solid #e1e7ee;border-radius:10px;padding:12px;margin:10px 0}.g{display:grid;grid-template-columns:1fr 1fr;gap:8px}.g b{font-size:26px;color:var(--n);display:block}
-.row{display:flex;gap:6px;flex-wrap:wrap}label{font-size:14px;font-weight:600}.m{font-size:13px;color:#5b6773}.tb{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:4px}
-#ed{min-height:280px;background:#fff;border:1px solid #c5ced8;border-radius:8px;padding:10px}#ed img{max-width:100%}#ed table{border-collapse:collapse}#ed td{border:1px solid #999;padding:6px}.callout{background:#FFF6DD;border-left:5px solid var(--g);padding:8px 12px}
-#toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:var(--n);color:#fff;padding:10px 18px;border-radius:8px;display:none}
-</style></head><body><div id="toast"></div><div id="app"></div>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="config.js"></script>
+<!DOCTYPE html>
+<html lang="ne">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Guide Nepal — Admin</title>
+<meta name="description" content="Guide Nepal administration dashboard">
+<meta name="theme-color" content="#0B2A4A">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="./config.js"></script>
 <script>
-const sb=supabase.createClient(CFG.URL,CFG.KEY),A=document.getElementById('app');
-const E=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const $=id=>document.getElementById(id),V=id=>$(id).value;
-function T(m){const t=$('toast');t.textContent=m;t.style.display='block';setTimeout(()=>t.style.display='none',2500)}
-const TABS={dash:'Dashboard',posts:'Posts',cats:'Categories',cmts:'Comments',ads:'Ads',set:'Settings'};
-async function init(){const{data:{session}}=await sb.auth.getSession();if(!session)return login();
-const{data:ok}=await sb.rpc('is_admin');if(!ok){await sb.auth.signOut();return login('यो खाता admin होइन।')}shell();go('dash')}
-function login(m=''){A.innerHTML=`<div class="w"><h2>Guide Nepal Admin</h2><div class="c"><label>Email</label><input id="em" type="email" autocomplete="username"><label>Password</label><input id="pw" type="password" autocomplete="current-password"><button onclick="doLogin()">Login</button><p style="color:#D62828">${m}</p></div></div>`}
-async function doLogin(){const{error}=await sb.auth.signInWithPassword({email:V('em'),password:V('pw')});if(error)return login('Email वा password मिलेन।');init()}
-function shell(){A.innerHTML=`<nav>${Object.entries(TABS).map(([k,v])=>`<button id="t_${k}" onclick="go('${k}')">${v}</button>`).join('')}<button onclick="sb.auth.signOut().then(init)">Logout</button></nav><div class="w" id="main"></div>`}
-function go(k,a){document.querySelectorAll('nav button').forEach(b=>b.classList.remove('on'));$('t_'+k)?.classList.add('on');({dash,posts,cats,cmts,ads,set})[k](a)}
-const M=h=>$('main').innerHTML=h;
-async function cnt(t,f){let q=sb.from(t).select('*',{count:'exact',head:true});if(f)q=f(q);return(await q).count||0}
-async function dash(){const today=new Date().toISOString().slice(0,10);
-const n=await Promise.all([cnt('posts',q=>q.is('deleted_at',null)),cnt('posts',q=>q.eq('status','published').is('deleted_at',null)),cnt('posts',q=>q.eq('status','draft').is('deleted_at',null)),cnt('posts',q=>q.eq('is_important',true).is('deleted_at',null)),cnt('categories'),cnt('comments',q=>q.eq('status','pending')),cnt('likes'),cnt('advertisements',q=>q.eq('status','active'))]);
-const L=['Total Posts','Published','Drafts','Important','Categories','Pending Comments','Likes','Active Ads'];
-const{data:r}=await sb.from('posts').select('id,title,status,updated_at').is('deleted_at',null).order('updated_at',{ascending:false}).limit(5);
-M(`<div class="row"><button onclick="go('posts','new')">+ New Post</button><button class="o" onclick="go('posts')">Manage Posts</button><button class="o" onclick="go('cmts')">Comments</button><button class="o" onclick="go('ads')">Ads</button></div><div class="g" style="margin-top:12px">${n.map((x,i)=>`<div class="c"><b>${x}</b>${L[i]}</div>`).join('')}</div><h3>Recent</h3>${(r||[]).map(p=>`<div class="c">${E(p.title)} <span class="m">${p.status}</span></div>`).join('')||'<div class="c">No posts yet.</div>'}`)}
-/* POSTS */
-async function posts(a){if(a)return editor(a);
-const{data}=await sb.from('posts').select('*,categories(name)').is('deleted_at',null).order('updated_at',{ascending:false});window.PL=data||[];
-M(`<div class="row"><button onclick="go('posts','new')">+ New Post</button></div><input id="fq" placeholder="Search" oninput="plist()"><select id="fs" onchange="plist()"><option value="">All status</option><option>draft</option><option>published</option></select><div id="pl"></div>`);plist()}
-function plist(){const q=V('fq').toLowerCase(),s=V('fs');$('pl').innerHTML=PL.filter(p=>p.title.toLowerCase().includes(q)&&(!s||p.status==s)).map(p=>`<div class="c"><b>${E(p.title)}</b><div class="m">${E(p.categories?.name||'—')} · ${p.status} · ${p.is_important?'⭐ Important · ':''}${p.views} views</div><div class="row" style="margin-top:6px"><button class="s o" onclick="go('posts','${p.id}')">Edit</button><button class="s o" onclick="pset('${p.id}',{status:'${p.status=='published'?'draft':'published'}'${p.status=='published'?'':',published_at:new Date().toISOString()'}})">${p.status=='published'?'Unpublish':'Publish'}</button><button class="s o" onclick="pset('${p.id}',{is_important:${!p.is_important}})">${p.is_important?'Remove ⭐':'Mark ⭐'}</button><button class="s" onclick="pdel('${p.id}')">Delete</button></div></div>`).join('')||'<div class="c">No posts.</div>'}
-async function pset(id,o){o.updated_at=new Date().toISOString();const{error}=await sb.from('posts').update(o).eq('id',id);T(error?error.message:'Saved');posts()}
-async function pdel(id){if(!confirm('Are you sure you want to delete this post?'))return;await sb.from('posts').update({deleted_at:new Date().toISOString(),status:'draft'}).eq('id',id);T('Deleted');posts()}
-const slug=t=>{const s=t.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');return s||'post-'+Date.now().toString(36)};
-async function editor(id){const{data:c}=await sb.from('categories').select('*').order('name');let p={status:'draft',content:''};if(id!='new')p=(await sb.from('posts').select('*').eq('id',id).single()).data;window.EP=p;
-const f=(i,l,v='',t='text')=>`<label>${l}</label><input id="${i}" type="${t}" value="${E(v)}">`;
-M(`<h3>${id=='new'?'New Post':'Edit Post'}</h3>${f('ti','Title *',p.title)}${f('sl','Slug (URL)',p.slug)}<label>Category *</label><select id="ca"><option value="">—</option>${(c||[]).map(x=>`<option value="${x.id}" ${x.id==p.category_id?'selected':''}>${E(x.name)}</option>`).join('')}</select>
-<label>Short description</label><textarea id="ex" rows="2">${E(p.excerpt)}</textarea>
-<label>Content *</label><div class="tb">${[['H2','formatBlock','h2'],['H3','formatBlock','h3'],['P','formatBlock','p'],['B','bold'],['I','italic'],['• List','insertUnorderedList'],['1. List','insertOrderedList'],['Quote','formatBlock','blockquote']].map(([l,c,v])=>`<button class="s o" onmousedown="event.preventDefault();document.execCommand('${c}',false,${v?`'${v}'`:'null'})">${l}</button>`).join('')}
-<button class="s o" onmousedown="event.preventDefault();lnk()">Link</button><button class="s o" onmousedown="event.preventDefault();document.execCommand('insertHTML',false,'<div class=&quot;callout&quot;>Important note</div><p></p>')">Callout</button><button class="s o" onmousedown="event.preventDefault();document.execCommand('insertHTML',false,'<table><tr><td>A</td><td>B</td></tr><tr><td>C</td><td>D</td></tr></table><p></p>')">Table</button><button class="s o" onclick="$('imf').click()">Image</button><input id="imf" type="file" accept="image/*" hidden onchange="upl(this,u=>document.execCommand('insertImage',false,u))"></div>
-<div id="ed" contenteditable="true">${p.content}</div><br>
-<label>Featured image</label><input id="th" placeholder="Image URL" value="${E(p.thumbnail)}"><input type="file" accept="image/*" onchange="upl(this,u=>$('th').value=u)">
-<div class="g"><div>${f('rt','Reading time (min)',p.reading_time,'number')}</div><div><label>Status</label><select id="st"><option value="draft" ${p.status=='draft'?'selected':''}>Draft</option><option value="published" ${p.status=='published'?'selected':''}>Published</option></select></div></div>
-<label><input type="checkbox" id="im" style="width:auto" ${p.is_important?'checked':''}> ⭐ Mark as Important</label>
-${f('sn','Source name',p.source_name)}${f('su','Source URL',p.source_url)}${f('lv','Last verified',p.last_verified_at,'date')}${f('sk','SEO title',p.seo_title)}<label>SEO description</label><textarea id="sd" rows="2">${E(p.seo_description)}</textarea>${f('kw','Keywords (comma separated)',p.keywords)}
-<div class="row"><button onclick="psave()">Save</button><button class="o" onclick="go('posts')">Back</button></div>`)}
-function lnk(){const u=prompt('URL (https://...)');if(u)document.execCommand('createLink',false,u)}
-async function upl(inp,cb){const f=inp.files[0];if(!f)return;if(!f.type.startsWith('image/')||f.size>8e6)return T('Image only, max 8MB');T('Uploading...');
-const im=await createImageBitmap(f),s=Math.min(1,1200/im.width),cv=document.createElement('canvas');cv.width=im.width*s;cv.height=im.height*s;cv.getContext('2d').drawImage(im,0,0,cv.width,cv.height);
-const bl=await new Promise(r=>cv.toBlob(r,'image/jpeg',.8)),n=Date.now()+'-'+Math.random().toString(36).slice(2,7)+'.jpg';
-const{error}=await sb.storage.from('media').upload(n,bl,{contentType:'image/jpeg'});if(error)return T(error.message);cb(sb.storage.from('media').getPublicUrl(n).data.publicUrl);T('Uploaded')}
-async function psave(){const t=V('ti').trim(),ct=$('ed').innerHTML.trim();if(!t||!V('ca')||!ct)return T('Title, Category, Content required');
-const o={title:t,slug:V('sl').trim()||slug(t),category_id:V('ca'),excerpt:V('ex'),content:ct,thumbnail:V('th')||null,reading_time:+V('rt')||null,status:V('st'),is_important:$('im').checked,source_name:V('sn')||null,source_url:V('su')||null,last_verified_at:V('lv')||null,seo_title:V('sk')||null,seo_description:V('sd')||null,keywords:V('kw')||null,updated_at:new Date().toISOString()};
-if(o.status=='published'&&!EP.published_at)o.published_at=new Date().toISOString();
-const{error}=EP.id?await sb.from('posts').update(o).eq('id',EP.id):await sb.from('posts').insert(o);if(error)return T(error.message.includes('duplicate')?'Slug already used':error.message);T('Saved');go('posts')}
-/* CATEGORIES */
-async function cats(){const{data}=await sb.from('categories').select('*').order('name');
-M(`<div class="c"><h3>Add category</h3><input id="cn" placeholder="Name"><input id="cs" placeholder="Slug (english, e.g. government-services)"><input id="cd" placeholder="Description"><input id="ci" placeholder="Icon (emoji)"><button onclick="csave()">Add</button></div>${(data||[]).map(c=>`<div class="c"><b>${E(c.icon||'')} ${E(c.name)}</b> <span class="m">/${E(c.slug)} · ${c.status}</span><div class="row" style="margin-top:6px"><button class="s o" onclick="cedit('${c.id}','${E(c.name).replace(/'/g,'')}')">Rename</button><button class="s o" onclick="cset('${c.id}','${c.status=='active'?'disabled':'active'}')">${c.status=='active'?'Disable':'Enable'}</button><button class="s" onclick="cdel('${c.id}')">Delete</button></div></div>`).join('')||'<div class="c">No categories yet.</div>'}`)}
-async function csave(){const n=V('cn').trim();if(!n)return T('Name required');const{error}=await sb.from('categories').insert({name:n,slug:V('cs').trim()||slug(n),description:V('cd'),icon:V('ci')});T(error?error.message:'Added');cats()}
-async function cedit(id,o){const n=prompt('New name',o);if(n){await sb.from('categories').update({name:n,updated_at:new Date().toISOString()}).eq('id',id);cats()}}
-async function cset(id,s){await sb.from('categories').update({status:s}).eq('id',id);cats()}
-async function cdel(id){const n=await cnt('posts',q=>q.eq('category_id',id));if(!confirm(n?`Warning: ${n} post(s) use this category. Delete anyway?`:'Delete this category?'))return;
-if(n)await sb.from('posts').update({category_id:null}).eq('category_id',id);await sb.from('categories').delete().eq('id',id);cats()}
-/* COMMENTS */
-async function cmts(){const{data}=await sb.from('comments').select('*,posts(title)').neq('status','deleted').order('created_at',{ascending:false}).limit(100);
-M(`<h3>Comments</h3>${(data||[]).map(c=>`<div class="c"><b>${E(c.name)}</b> <span class="m">on ${E(c.posts?.title)} · ${new Date(c.created_at).toLocaleDateString()} · ${c.status}</span><p>${E(c.comment)}</p><div class="row">${[['approved','Approve'],['hidden','Hide'],['spam','Spam'],['deleted','Delete']].map(([s,l])=>`<button class="s ${s=='approved'?'':'o'}" onclick="cmset('${c.id}','${s}')">${l}</button>`).join('')}</div></div>`).join('')||'<div class="c">No comments.</div>'}`)}
-async function cmset(id,s){await sb.from('comments').update({status:s}).eq('id',id);cmts()}
-/* ADS */
-const PL2=[['home_top','Home: top'],['home_mid','Home: between Important & Latest'],['home_bottom','Home: bottom'],['cat_top','Category: top'],['cat_bottom','Category: bottom'],['post_before','Article: before content'],['post_after','Article: after content']];
-async function ads(){const{data}=await sb.from('advertisements').select('*').order('created_at',{ascending:false});
-M(`<div class="c"><h3>New advertisement</h3><input id="at" placeholder="Ad title"><label>Image</label><input id="ai" placeholder="Image URL"><input type="file" accept="image/*" onchange="upl(this,u=>$('ai').value=u)"><input id="au" placeholder="Destination URL"><select id="ap">${PL2.map(([v,l])=>`<option value="${v}">${l}</option>`).join('')}</select><label>Start</label><input id="as" type="date"><label>End</label><input id="ae" type="date"><label>Priority (higher shows first)</label><input id="ar" type="number" value="0"><button onclick="asave()">Create (disabled)</button></div>
-${(data||[]).map(a=>`<div class="c"><b>${E(a.title)}</b> <span class="m">${a.placement} · ${a.status} · prio ${a.priority} · ${a.start_date||'—'} → ${a.end_date||'—'}</span><div class="row" style="margin-top:6px"><button class="s o" onclick="aset('${a.id}','${a.status=='active'?'disabled':'active'}')">${a.status=='active'?'Disable':'Enable'}</button><button class="s" onclick="adel('${a.id}')">Delete</button></div></div>`).join('')}`)}
-async function asave(){if(!V('at')||!V('ai'))return T('Title & image required');const{error}=await sb.from('advertisements').insert({title:V('at'),image:V('ai'),target_url:V('au'),placement:V('ap'),start_date:V('as')||null,end_date:V('ae')||null,priority:+V('ar')||0});T(error?error.message:'Created. Press Enable.');ads()}
-async function aset(id,s){await sb.from('advertisements').update({status:s,updated_at:new Date().toISOString()}).eq('id',id);ads()}
-async function adel(id){if(confirm('Delete this ad?')){await sb.from('advertisements').delete().eq('id',id);ads()}}
-/* SETTINGS */
-const SK=[['contact_email','Contact email'],['facebook','Facebook URL'],['tiktok','TikTok URL'],['youtube','YouTube URL'],['page_about','About page (HTML/text)'],['page_privacy','Privacy page'],['page_terms','Terms page'],['page_disclaimer','Disclaimer (blank = default)']];
-async function set(){const{data}=await sb.from('site_settings').select('*'),s=Object.fromEntries((data||[]).map(r=>[r.key,r.value]));
-M(`<h3>Settings</h3>${SK.map(([k,l])=>`<label>${l}</label>${k.startsWith('page')?`<textarea id="s_${k}" rows="4">${E(s[k])}</textarea>`:`<input id="s_${k}" value="${E(s[k])}">`}`).join('')}<button onclick="sset()">Save settings</button>`)}
-async function sset(){const rows=SK.map(([k])=>({key:k,value:V('s_'+k)}));const{error}=await sb.from('site_settings').upsert(rows);T(error?error.message:'Saved')}
-init();
-</script></body></html>
+tailwind.config={theme:{extend:{colors:{navy:"#0B2A4A",blue:"#123F6D",nepaliRed:"#D62828",gold:"#F4B942",soft:"#F7F9FC",ink:"#17212B"},fontFamily:{sans:["Noto Sans Devanagari","system-ui","sans-serif"]},boxShadow:{soft:"0 10px 35px rgba(11,42,74,.08)",card:"0 8px 30px rgba(11,42,74,.07)"}}}};
+</script>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{font-family:"Noto Sans Devanagari",system-ui,sans-serif;background:#f7f9fc;color:#17212b}::selection{background:#0b2a4a;color:#fff}.glass{background:rgba(255,255,255,.88);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}.card{background:#fff;border:1px solid #e2e8f0;border-radius:20px}.sidebar-item{transition:background .2s ease,color .2s ease}.sidebar-item:hover{background:#f1f5f9;color:#0b2a4a}.sidebar-item.active{background:#0b2a4a;color:#fff;box-shadow:0 8px 20px rgba(11,42,74,.12)}.fade-up{animation:fadeUp .35s ease both}@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}.spinner{width:18px;height:18px;border:2px solid rgba(255,255,255,.35);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}.toast{animation:toastIn .3s ease both}@keyframes toastIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}.modal-backdrop{background:rgba(15,23,42,.55);backdrop-filter:blur(5px)}.line-clamp-2{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}.no-scrollbar::-webkit-scrollbar{display:none}.no-scrollbar{scrollbar-width:none}
+</style>
+</head>
+<body>
+
+<section id="authScreen" class="min-h-screen bg-soft flex items-center justify-center px-4">
+<div class="w-full max-w-md">
+<div class="text-center mb-8">
+<div class="mx-auto w-16 h-16 rounded-2xl bg-navy text-white flex items-center justify-center font-extrabold text-xl shadow-soft">GN</div>
+<h1 class="mt-5 text-2xl font-extrabold text-navy">Guide Nepal</h1>
+<p class="mt-1 text-sm text-slate-500">Administration Panel</p>
+</div>
+<div class="card p-6 sm:p-8 shadow-soft">
+<div class="mb-6">
+<h2 class="text-xl font-extrabold text-navy">Admin Login</h2>
+<p class="mt-1 text-sm text-slate-500">आफ्नो admin account बाट login गर्नुहोस्।</p>
+</div>
+<form id="loginForm" class="space-y-4">
+<div>
+<label class="block text-sm font-semibold text-slate-700 mb-2">Email</label>
+<input id="loginEmail" type="email" required autocomplete="email" class="w-full px-4 py-3 rounded-xl border border-slate-200 outline-none focus:border-navy focus:ring-4 focus:ring-navy/5" placeholder="admin@example.com">
+</div>
+<div>
+<label class="block text-sm font-semibold text-slate-700 mb-2">Password</label>
+<input id="loginPassword" type="password" required autocomplete="current-password" class="w-full px-4 py-3 rounded-xl border border-slate-200 outline-none focus:border-navy focus:ring-4 focus:ring-navy/5" placeholder="••••••••">
+</div>
+<div id="loginError" class="hidden rounded-xl bg-red-50 border border-red-100 text-red-700 text-sm p-3"></div>
+<button id="loginBtn" type="submit" class="w-full bg-navy hover:bg-blue text-white py-3 rounded-xl font-bold transition flex items-center justify-center gap-2">Login</button>
+</form>
+</div>
+<div class="text-center mt-6 text-xs text-slate-400">Guide Nepal Admin</div>
+</div>
+</section>
+
+<div id="adminApp" class="hidden min-h-screen">
+<header class="lg:hidden sticky top-0 z-40 bg-white border-b border-slate-200">
+<div class="h-16 px-4 flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-xl bg-navy text-white flex items-center justify-center font-extrabold">GN</div>
+<div><div class="font-extrabold text-navy text-sm">Guide Nepal</div><div class="text-[11px] text-slate-400">Admin Panel</div></div>
+</div>
+<button id="mobileMenuBtn" type="button" class="w-10 h-10 rounded-xl border border-slate-200 flex items-center justify-center text-slate-600">
+<svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
+</button>
+</div>
+</header>
+
+<div class="min-h-screen flex">
+<aside id="adminSidebar" class="fixed lg:sticky top-0 left-0 z-50 w-72 h-screen bg-white border-r border-slate-200 -translate-x-full lg:translate-x-0 transition-transform duration-300 flex flex-col">
+<div class="h-20 px-5 border-b border-slate-100 flex items-center">
+<div class="flex items-center gap-3">
+<div class="w-11 h-11 rounded-xl bg-navy text-white flex items-center justify-center font-extrabold">GN</div>
+<div><div class="font-extrabold text-navy">Guide Nepal</div><div class="text-xs text-slate-400">Administration</div></div>
+</div>
+</div>
+<nav class="flex-1 overflow-y-auto p-4 space-y-1">
+<div class="px-3 pt-2 pb-2 text-[11px] font-bold uppercase tracking-wider text-slate-400">Main</div>
+<button type="button" data-section="dashboard" class="sidebar-item active w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-semibold text-left">
+<svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 13h8V3H3v10zM13 21h8V11h-8v10zM13 3h8v4h-8V3zM3 17h8v4H3v-4z"/></svg>Dashboard
+</button>
+<button type="button" data-section="posts" class="sidebar-item w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-semibold text-left text-slate-600">
+<svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 20h9M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>Posts
+</button>
+<button type="button" data-section="categories" class="sidebar-item w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-semibold text-left text-slate-600">
+<svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>Categories
+</button>
+<button type="button" data-section="comments" class="sidebar-item w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-semibold text-left text-slate-600">
+<svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 11.5a8.38 8.38 0 01-1.9 5.4A8.5 8.5 0 1112.5 3a8.38 8.38 0 015.4 1.9L21 3v8.5z"/></svg>Comments
+</button>
+<div class="px-3 pt-6 pb-2 text-[11px] font-bold uppercase tracking-wider text-slate-400">Content</div>
+<button type="button" data-section="advertisements" class="sidebar-item w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-semibold text-left text-slate-600">
+<svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 11l18-5v12L3 13v-2zM11 13v5"/></svg>Advertisements
+</button>
+<div class="px-3 pt-6 pb-2 text-[11px] font-bold uppercase tracking-wider text-slate-400">System</div>
+<button type="button" data-section="settings" class="sidebar-item w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-semibold text-left text-slate-600">
+<svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15.5a3.5 3.5 0 100-7 3.5 3.5 0 000 7z"/><path stroke-linecap="round" stroke-linejoin="round" d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06-1.5 1.5-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 .96 1.65 1.65 0 00-.13.65V20h-2.12v-.4a1.65 1.65 0 00-1.03-1.53 1.65 1.65 0 00-1.82.33l-.06.06-1.5-1.5.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.53-1.03H7.2v-2.12h.4a1.65 1.65 0 001.53-1.03 1.65 1.65 0 00-.33-1.82l-.06-.06 1.5-1.5.06.06a1.65 1.65 0 001.82.33h.01A1.65 1.65 0 0013.16 7V6.6h2.12V7a1.65 1.65 0 001.03 1.53 1.65 1.65 0 001.82-.33l.06-.06 1.5 1.5-.06.06a1.65 1.65 0 00-.33 1.82v.01A1.65 1.65 0 0019.33 12h.4v2.12h-.4a1.65 1.65 0 00-1.53.88z"/></svg>Settings
+</button>
+</nav>
+<div class="p-4 border-t border-slate-100">
+<a href="./index.html" target="_blank" class="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-semibold text-slate-600 hover:bg-slate-50 transition">
+<svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M2.46 12C3.73 7.94 7.52 5 12 5s8.27 2.94 9.54 7c-1.27 4.06-5.06 7-9.54 7s-8.27-2.94-9.54-7z"/></svg>View Website
+</a>
+<button id="logoutBtn" type="button" class="w-full mt-1 flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-semibold text-red-600 hover:bg-red-50 transition">
+<svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 17l5-5-5-5M15 12H3M21 19V5a2 2 0 00-2-2h-6"/></svg>Logout
+</button>
+</div>
+</aside>
+
+<div id="sidebarOverlay" class="hidden fixed inset-0 z-40 bg-slate-950/40 lg:hidden"></div>
+
+<main class="flex-1 min-w-0">
+<header class="hidden lg:flex h-20 bg-white border-b border-slate-200 px-8 items-center justify-between">
+<div><h1 id="pageTitle" class="text-xl font-extrabold text-navy">Dashboard</h1><p id="pageSubtitle" class="text-sm text-slate-500 mt-1">Guide Nepal administration overview</p></div>
+<div class="flex items-center gap-3"><div class="text-right"><div id="adminEmail" class="text-sm font-bold text-slate-700">Admin</div><div class="text-xs text-slate-400">Administrator</div></div><div class="w-10 h-10 rounded-full bg-navy text-white flex items-center justify-center font-bold">A</div></div>
+</header>
+
+<div class="p-4 sm:p-6 lg:p-8">
+
+<section id="section-dashboard" class="admin-section fade-up">
+<div class="space-y-6">
+<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+<div><h2 class="text-2xl font-extrabold text-navy">Dashboard</h2><p class="text-sm text-slate-500 mt-1">Guide Nepal को content र activity को overview यहाँ हेर्नुहोस्।</p></div>
+<button type="button" data-section="posts" class="bg-navy hover:bg-blue text-white px-5 py-3 rounded-xl font-bold text-sm transition">+ New Post</button>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+<div class="card p-5 shadow-card"><div class="flex items-center justify-between"><div><p class="text-sm text-slate-500">Total Posts</p><h3 id="statTotalPosts" class="text-3xl font-extrabold text-navy mt-2">0</h3></div><div class="w-12 h-12 rounded-2xl bg-blue-50 text-blue flex items-center justify-center">📝</div></div><div class="mt-4 text-xs text-slate-400">Published र draft posts सहित</div></div>
+<div class="card p-5 shadow-card"><div class="flex items-center justify-between"><div><p class="text-sm text-slate-500">Published</p><h3 id="statPublishedPosts" class="text-3xl font-extrabold text-green-600 mt-2">0</h3></div><div class="w-12 h-12 rounded-2xl bg-green-50 text-green-600 flex items-center justify-center">✓</div></div><div class="mt-4 text-xs text-slate-400">Public website मा देखिने posts</div></div>
+<div class="card p-5 shadow-card"><div class="flex items-center justify-between"><div><p class="text-sm text-slate-500">Categories</p><h3 id="statCategories" class="text-3xl font-extrabold text-purple-600 mt-2">0</h3></div><div class="w-12 h-12 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center">☰</div></div><div class="mt-4 text-xs text-slate-400">Active categories</div></div>
+<div class="card p-5 shadow-card"><div class="flex items-center justify-between"><div><p class="text-sm text-slate-500">Pending Comments</p><h3 id="statPendingComments" class="text-3xl font-extrabold text-amber-600 mt-2">0</h3></div><div class="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center">💬</div></div><div class="mt-4 text-xs text-slate-400">Moderation आवश्यक comments</div></div>
+</div>
+<div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+<div class="xl:col-span-2 card shadow-card overflow-hidden">
+<div class="p-5 border-b border-slate-100 flex items-center justify-between"><div><h3 class="font-extrabold text-navy">Recent Posts</h3><p class="text-xs text-slate-400 mt-1">हालसालै तयार वा प्रकाशित भएका posts</p></div><button type="button" data-section="posts" class="text-sm font-bold text-blue">View all</button></div>
+<div id="dashboardRecentPosts" class="divide-y divide-slate-100"><div class="p-8 text-center text-sm text-slate-400">Loading posts...</div></div>
+</div>
+<div class="card shadow-card p-5">
+<h3 class="font-extrabold text-navy">Quick Actions</h3><p class="text-xs text-slate-400 mt-1">बारम्बार प्रयोग हुने कामहरू</p>
+<div class="mt-5 space-y-3">
+<button type="button" data-section="posts" class="w-full p-4 rounded-2xl border border-slate-200 hover:bg-slate-50 text-left"><b>📝 Create New Post</b><span class="block text-xs text-slate-400 mt-1">नयाँ जानकारी प्रकाशित गर्नुहोस्</span></button>
+<button type="button" data-section="categories" class="w-full p-4 rounded-2xl border border-slate-200 hover:bg-slate-50 text-left"><b>☰ Manage Categories</b><span class="block text-xs text-slate-400 mt-1">Category manage गर्नुहोस्</span></button>
+<button type="button" data-section="comments" class="w-full p-4 rounded-2xl border border-slate-200 hover:bg-slate-50 text-left"><b>💬 Moderate Comments</b><span class="block text-xs text-slate-400 mt-1">Pending comments review गर्नुहोस्</span></button>
+<button type="button" data-section="advertisements" class="w-full p-4 rounded-2xl border border-slate-200 hover:bg-slate-50 text-left"><b>📢 Manage Ads</b><span class="block text-xs text-slate-400 mt-1">Advertisements manage गर्नुहोस्</span></button>
+</div>
+</div>
+</div>
+<div class="card shadow-card overflow-hidden">
+<div class="p-5 border-b border-slate-100"><h3 class="font-extrabold text-navy">Important Posts</h3><p class="text-xs text-slate-400 mt-1">Homepage मा priority सहित देखाइने posts</p></div>
+<div id="dashboardImportantPosts" class="p-5 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4"><div class="text-sm text-slate-400">Loading...</div></div>
+</div>
+</div>
+</section>
+
+<section id="section-posts" class="admin-section hidden">
+<div class="space-y-6">
+<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"><div><h2 class="text-2xl font-extrabold text-navy">Posts</h2><p class="text-sm text-slate-500 mt-1">Guide Nepal का articles manage गर्नुहोस्।</p></div><button id="newPostBtn" type="button" class="bg-navy hover:bg-blue text-white px-5 py-3 rounded-xl font-bold">+ New Post</button></div>
+<div class="card p-4 shadow-card"><div class="grid grid-cols-1 md:grid-cols-3 gap-3"><input id="postSearch" type="search" placeholder="Post खोज्नुहोस्..." class="px-4 py-3 rounded-xl border border-slate-200 outline-none focus:border-navy"><select id="postStatusFilter" class="px-4 py-3 rounded-xl border border-slate-200"><option value="">All Status</option><option value="published">Published</option><option value="draft">Draft</option></select><select id="postCategoryFilter" class="px-4 py-3 rounded-xl border border-slate-200"><option value="">All Categories</option></select></div></div>
+<div class="card shadow-card overflow-hidden"><div class="overflow-x-auto"><table class="w-full text-sm"><thead class="bg-slate-50 border-b border-slate-200"><tr><th class="text-left px-5 py-4">Post</th><th class="text-left px-5 py-4">Category</th><th class="text-left px-5 py-4">Status</th><th class="text-left px-5 py-4">Views</th><th class="text-right px-5 py-4">Action</th></tr></thead><tbody id="postsTableBody"><tr><td colspan="5" class="px-5 py-10 text-center text-slate-400">Loading...</td></tr></tbody></table></div></div>
+</div>
+</section>
+
+<section id="section-categories" class="admin-section hidden">
+<div class="space-y-6">
+<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"><div><h2 class="text-2xl font-extrabold text-navy">Categories</h2><p class="text-sm text-slate-500 mt-1">Website का content categories manage गर्नुहोस्।</p></div><button id="newCategoryBtn" type="button" class="bg-navy hover:bg-blue text-white px-5 py-3 rounded-xl font-bold">+ New Category</button></div>
+<div class="card shadow-card overflow-hidden"><div class="overflow-x-auto"><table class="w-full text-sm"><thead class="bg-slate-50 border-b border-slate-200"><tr><th class="text-left px-5 py-4">Name</th><th class="text-left px-5 py-4">Slug</th><th class="text-left px-5 py-4">Status</th><th class="text-right px-5 py-4">Action</th></tr></thead><tbody id="categoriesTableBody"><tr><td colspan="4" class="px-5 py-10 text-center text-slate-400">Loading...</td></tr></tbody></table></div></div>
+</div>
+</section>
+
+<section id="section-comments" class="admin-section hidden">
+<div class="space-y-6">
+<div><h2 class="text-2xl font-extrabold text-navy">Comments</h2><p class="text-sm text-slate-500 mt-1">Users बाट आएका comments review र moderation गर्नुहोस्।</p></div>
+<div class="card p-4 shadow-card"><div class="flex flex-col sm:flex-row gap-3"><input id="commentSearch" type="search" placeholder="Comment वा name खोज्नुहोस्..." class="flex-1 px-4 py-3 rounded-xl border border-slate-200"><select id="commentStatusFilter" class="px-4 py-3 rounded-xl border border-slate-200"><option value="">All</option><option value="pending">Pending</option><option value="approved">Approved</option><option value="hidden">Hidden</option><option value="spam">Spam</option></select></div></div>
+<div id="commentsList" class="space-y-4"><div class="card p-8 text-center text-slate-400">Loading...</div></div>
+</div>
+</section>
+
+<section id="section-advertisements" class="admin-section hidden">
+<div class="space-y-6">
+<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"><div><h2 class="text-2xl font-extrabold text-navy">Advertisements</h2><p class="text-sm text-slate-500 mt-1">Website मा देखाइने advertisements manage गर्नुहोस्।</p></div><button id="newAdBtn" type="button" class="bg-navy hover:bg-blue text-white px-5 py-3 rounded-xl font-bold">+ New Advertisement</button></div>
+<div class="card shadow-card overflow-hidden"><div class="overflow-x-auto"><table class="w-full text-sm"><thead class="bg-slate-50 border-b border-slate-200"><tr><th class="text-left px-5 py-4">Advertisement</th><th class="text-left px-5 py-4">Placement</th><th class="text-left px-5 py-4">Status</th><th class="text-left px-5 py-4">Priority</th><th class="text-right px-5 py-4">Action</th></tr></thead><tbody id="adsTableBody"><tr><td colspan="5" class="px-5 py-10 text-center text-slate-400">Loading...</td></tr></tbody></table></div></div>
+</div>
+</section>
+
+<section id="section-settings" class="admin-section hidden">
+<div class="space-y-6">
+<div><h2 class="text-2xl font-extrabold text-navy">Settings</h2><p class="text-sm text-slate-500 mt-1">Guide Nepal website को settings manage गर्नुहोस्।</p></div>
+<div class="card shadow-card p-6">
+<form id="settingsForm" class="space-y-5">
+<div><label class="block text-sm font-bold mb-2">Site Name</label><input id="settingSiteName" type="text" class="w-full px-4 py-3 rounded-xl border border-slate-200"></div>
+<div><label class="block text-sm font-bold mb-2">Tagline</label><input id="settingTagline" type="text" class="w-full px-4 py-3 rounded-xl border border-slate-200"></div>
+<div><label class="block text-sm font-bold mb-2">Site Description</label><textarea id="settingDescription" rows="4" class="w-full px-4 py-3 rounded-xl border border-slate-200"></textarea></div>
+<div><label class="block text-sm font-bold mb-2">Contact Email</label><input id="settingContactEmail" type="email" class="w-full px-4 py-3 rounded-xl border border-slate-200"></div>
+<div><label class="block text-sm font-bold mb-2">Facebook URL</label><input id="settingFacebook" type="url" class="w-full px-4 py-3 rounded-xl border border-slate-200"></div>
+<div><label class="block text-sm font-bold mb-2">Instagram URL</label><input id="settingInstagram" type="url" class="w-full px-4 py-3 rounded-xl border border-slate-200"></div>
+<button type="submit" class="bg-navy hover:bg-blue text-white px-6 py-3 rounded-xl font-bold">Save Settings</button>
+</form>
+</div>
+</div>
+</section>
+
+</div>
+</main>
+</div>
+
+<div id="postModal" class="hidden fixed inset-0 z-[100] modal-backdrop items-center justify-center p-4">
+<div class="bg-white w-full max-w-4xl max-h-[92vh] overflow-y-auto rounded-2xl shadow-2xl">
+<div class="sticky top-0 bg-white border-b border-slate-200 px-5 py-4 flex items-center justify-between z-10"><div><h3 id="postModalTitle" class="text-lg font-extrabold text-navy">New Post</h3><p class="text-xs text-slate-400">Article information</p></div><button id="closePostModal" type="button" class="w-9 h-9 rounded-lg hover:bg-slate-100 text-xl">×</button></div>
+<form id="postForm" class="p-5 space-y-5">
+<input id="postId" type="hidden">
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+<div><label class="block text-sm font-bold mb-2">Title *</label><input id="postTitle" required type="text" class="w-full px-4 py-3 rounded-xl border border-slate-200" placeholder="Post title"></div>
+<div><label class="block text-sm font-bold mb-2">Slug *</label><input id="postSlug" required type="text" class="w-full px-4 py-3 rounded-xl border border-slate-200" placeholder="post-slug"></div>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+<div><label class="block text-sm font-bold mb-2">Category</label><select id="postCategory" class="w-full px-4 py-3 rounded-xl border border-slate-200"></select></div>
+<div><label class="block text-sm font-bold mb-2">Status</label><select id="postStatus" class="w-full px-4 py-3 rounded-xl border border-slate-200"><option value="draft">Draft</option><option value="published">Published</option></select></div>
+</div>
+<div><label class="block text-sm font-bold mb-2">Excerpt</label><textarea id="postExcerpt" rows="3" class="w-full px-4 py-3 rounded-xl border border-slate-200"></textarea></div>
+<div><label class="block text-sm font-bold mb-2">Content *</label><textarea id="postContent" required rows="12" class="w-full px-4 py-3 rounded-xl border border-slate-200"></textarea></div>
+<div><label class="block text-sm font-bold mb-2">Thumbnail URL</label><input id="postThumbnail" type="url" class="w-full px-4 py-3 rounded-xl border border-slate-200" placeholder="https://..."></div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+<div><label class="block text-sm font-bold mb-2">Reading Time</label><input id="postReadingTime" type="number" min="1" class="w-full px-4 py-3 rounded-xl border border-slate-200"></div>
+<div><label class="block text-sm font-bold mb-2">Source Name</label><input id="postSourceName" type="text" class="w-full px-4 py-3 rounded-xl border border-slate-200"></div>
+<div><label class="block text-sm font-bold mb-2">Source URL</label><input id="postSourceUrl" type="url" class="w-full px-4 py-3 rounded-xl border border-slate-200"></div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+<div><label class="block text-sm font-bold mb-2">SEO Title</label><input id="postSeoTitle" type="text" class="w-full px-4 py-3 rounded-xl border border-slate-200"></div>
+<div><label class="block text-sm font-bold mb-2">SEO Description</label><input id="postSeoDescription" type="text" class="w-full px-4 py-3 rounded-xl border border-slate-200"></div>
+</div>
+<div><label class="block text-sm font-bold mb-2">Keywords</label><input id="postKeywords" type="text" class="w-full px-4 py-3 rounded-xl border border-slate-200"></div>
+<label class="flex items-center gap-3 cursor-pointer"><input id="postImportant" type="checkbox" class="w-5 h-5"><span class="text-sm font-semibold">Important Post बनाउने</span></label>
+<div class="flex justify-end gap-3 pt-3 border-t border-slate-100"><button id="cancelPostBtn" type="button" class="px-5 py-3 rounded-xl border border-slate-200 font-bold">Cancel</button><button type="submit" class="px-6 py-3 rounded-xl bg-navy text-white font-bold">Save Post</button></div>
+</form>
+</div>
+</div>
+
+<div id="categoryModal" class="hidden fixed inset-0 z-[100] modal-backdrop items-center justify-center p-4">
+<div class="bg-white w-full max-w-lg rounded-2xl shadow-2xl">
+<div class="px-5 py-4 border-b border-slate-200 flex items-center justify-between"><h3 id="categoryModalTitle" class="font-extrabold text-navy">New Category</h3><button id="closeCategoryModal" type="button" class="text-xl">×</button></div>
+<form id="categoryForm" class="p-5 space-y-5">
+<input id="categoryId" type="hidden">
+<div><label class="block text-sm font-bold mb-2">Name *</label><input id="categoryName" required type="text" class="w-full px-4 py-3 rounded-xl border border-slate-200"></div>
+<div><label class="block text-sm font-bold mb-2">Slug *</label><input id="categorySlug" required type="text" class="w-full px-4 py-3 rounded-xl border border-slate-200"></div>
+<div><label class="block text-sm font-bold mb-2">Description</label><textarea id="categoryDescription" rows="3" class="w-full px-4 py-3 rounded-xl border border-slate-200"></textarea></div>
+<div><label class="block text-sm font-bold mb-2">Icon</label><input id="categoryIcon" type="text" class="w-full px-4 py-3 rounded-xl border border-slate-200" placeholder="🏛️"></div>
+<div><label class="block text-sm font-bold mb-2">Status</label><select id="categoryStatus" class="w-full px-4 py-3 rounded-xl border border-slate-200"><option value="active">Active</option><option value="disabled">Disabled</option></select></div>
+<div class="flex justify-end gap-3"><button id="cancelCategoryBtn" type="button" class="px-5 py-3 rounded-xl border border-slate-200 font-bold">Cancel</button><button type="submit" class="px-6 py-3 rounded-xl bg-navy text-white font-bold">Save</button></div>
+</form>
+</div>
+</div>
+
+<div id="adModal" class="hidden fixed inset-0 z-[100] modal-backdrop items-center justify-center p-4">
+<div class="bg-white w-full max-w-lg rounded-2xl shadow-2xl">
+<div class="px-5 py-4 border-b border-slate-200 flex items-center justify-between"><h3 id="adModalTitle" class="font-extrabold text-navy">New Advertisement</h3><button id="closeAdModal" type="button" class="text-xl">×</button></div>
+<form id="adForm" class="p-5 space-y-5">
+<input id="adId" type="hidden">
+<div><label class="block text-sm font-bold mb-2">Title *</label><input id="adTitle" required type="text" class="w-full px-4 py-3 rounded-xl border border-slate-200"></div>
+<div><label class="block text-sm font-bold mb-2">Image URL</label><input id="adImage" type="url" class="w-full px-4 py-3 rounded-xl border border-slate-200"></div>
+<div><label class="block text-sm font-bold mb-2">Target URL</label><input id="adTargetUrl" type="url" class="w-full px-4 py-3 rounded-xl border border-slate-200"></div>
+<div><label class="block text-sm font-bold mb-2">Placement</label><select id="adPlacement" class="w-full px-4 py-3 rounded-xl border border-slate-200"><option value="homepage_top">Homepage Top</option><option value="homepage_middle">Homepage Middle</option><option value="homepage_bottom">Homepage Bottom</option><option value="article_top">Article Top</option><option value="article_middle">Article Middle</option><option value="article_bottom">Article Bottom</option><option value="sidebar">Sidebar</option></select></div>
+<div class="grid grid-cols-2 gap-4"><div><label class="block text-sm font-bold mb-2">Priority</label><input id="adPriority" type="number" value="0" class="w-full px-4 py-3 rounded-xl border border-slate-200"></div><div><label class="block text-sm font-bold mb-2">Status</label><select id="adStatus" class="w-full px-4 py-3 rounded-xl border border-slate-200"><option value="disabled">Disabled</option><option value="active">Active</option></select></div></div>
+<div class="grid grid-cols-2 gap-4"><div><label class="block text-sm font-bold mb-2">Start Date</label><input id="adStartDate" type="date" class="w-full px-4 py-3 rounded-xl border border-slate-200"></div><div><label class="block text-sm font-bold mb-2">End Date</label><input id="adEndDate" type="date" class="w-full px-4 py-3 rounded-xl border border-slate-200"></div></div>
+<div class="flex justify-end gap-3"><button id="cancelAdBtn" type="button" class="px-5 py-3 rounded-xl border border-slate-200 font-bold">Cancel</button><button type="submit" class="px-6 py-3 rounded-xl bg-navy text-white font-bold">Save</button></div>
+</form>
+</div>
+</div>
+
+<div id="toastContainer" class="fixed bottom-5 right-5 z-[200] space-y-2 max-w-sm"></div>
+</div>
+
+<script>
+const sb=supabase.createClient(CFG.URL,CFG.KEY);
+const state={categories:[],posts:[],comments:[],ads:[]};
+const $=id=>document.getElementById(id);
+const esc=(v="")=>String(v).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));
+const slugify=v=>v.toString().toLowerCase().trim().replace(/[^a-z0-9\s-]/g,"").replace(/\s+/g,"-").replace(/-+/g,"-");
+function toast(message,type="success"){const e=document.createElement("div");e.className=`toast px-4 py-3 rounded-xl shadow-lg text-sm font-semibold ${type==="error"?"bg-red-600":"bg-navy"} text-white`;e.textContent=message;$("toastContainer").appendChild(e);setTimeout(()=>e.remove(),3000)}
+function openModal(id){$(id).classList.remove("hidden");$(id).classList.add("flex")}
+function closeModal(id){$(id).classList.add("hidden");$(id).classList.remove("flex")}
+
+$("loginForm").addEventListener("submit",async e=>{
+e.preventDefault();
+$("loginError").classList.add("hidden");
+$("loginBtn").disabled=true;
+$("loginBtn").textContent="Logging in...";
+const {error}=await sb.auth.signInWithPassword({email:$("loginEmail").value.trim(),password:$("loginPassword").value});
+if(error){$("loginError").textContent=error.message;$("loginError").classList.remove("hidden");$("loginBtn").disabled=false;$("loginBtn").textContent="Login";return}
+await checkAdmin();
+});
+
+async function checkAdmin(){
+const {data:{user}}=await sb.auth.getUser();
+if(!user){$("authScreen").classList.remove("hidden");$("adminApp").classList.add("hidden");return}
+const {data,error}=await sb.from("admins").select("user_id").eq("user_id",user.id).maybeSingle();
+if(error||!data){await sb.auth.signOut();$("loginError").textContent="यो account admin होइन।";$("loginError").classList.remove("hidden");$("loginBtn").disabled=false;$("loginBtn").textContent="Login";return}
+$("authScreen").classList.add("hidden");
+$("adminApp").classList.remove("hidden");
+$("adminEmail").textContent=user.email||"Admin";
+await initializeAdmin();
+}
+
+$("logoutBtn").addEventListener("click",async()=>{await sb.auth.signOut();location.reload()});
+
+const sectionTitles={
+dashboard:["Dashboard","Guide Nepal administration overview"],
+posts:["Posts","Manage Guide Nepal articles"],
+categories:["Categories","Manage website categories"],
+comments:["Comments","Review and moderate user comments"],
+advertisements:["Advertisements","Manage website advertisements"],
+settings:["Settings","Manage website settings"]
+};
+
+function showSection(name){
+document.querySelectorAll(".admin-section").forEach(x=>x.classList.add("hidden"));
+$("section-"+name).classList.remove("hidden");
+document.querySelectorAll("[data-section]").forEach(x=>x.classList.remove("active"));
+document.querySelectorAll(`[data-section="${name}"]`).forEach(x=>x.classList.add("active"));
+$("pageTitle").textContent=sectionTitles[name][0];
+$("pageSubtitle").textContent=sectionTitles[name][1];
+$("adminSidebar").classList.remove("translate-x-0");
+$("adminSidebar").classList.add("-translate-x-full");
+$("sidebarOverlay").classList.add("hidden");
+if(name==="dashboard")loadDashboard();
+if(name==="posts")loadPosts();
+if(name==="categories")loadCategories();
+if(name==="comments")loadComments();
+if(name==="advertisements")loadAds();
+if(name==="settings")loadSettings();
+}
+
+document.addEventListener("click",e=>{
+const b=e.target.closest("[data-section]");
+if(b)showSection(b.dataset.section);
+});
+
+$("mobileMenuBtn").addEventListener("click",()=>{
+$("adminSidebar").classList.remove("-translate-x-full");
+$("adminSidebar").classList.add("translate-x-0");
+$("sidebarOverlay").classList.remove("hidden");
+});
+$("sidebarOverlay").addEventListener("click",()=>{
+$("adminSidebar").classList.remove("translate-x-0");
+$("adminSidebar").classList.add("-translate-x-full");
+$("sidebarOverlay").classList.add("hidden");
+});
+
+async function loadCategories(){
+const {data,error}=await sb.from("categories").select("*").order("created_at",{ascending:false});
+if(error){toast(error.message,"error");return}
+state.categories=data||[];
+renderCategories();
+fillCategorySelects();
+}
+
+function renderCategories(){
+const body=$("categoriesTableBody");
+if(!state.categories.length){body.innerHTML=`<tr><td colspan="4" class="px-5 py-10 text-center text-slate-400">No categories found.</td></tr>`;return}
+body.innerHTML=state.categories.map(c=>`<tr class="border-b border-slate-100"><td class="px-5 py-4"><div class="font-bold text-slate-700">${esc(c.icon||"")} ${esc(c.name)}</div><div class="text-xs text-slate-400 mt-1">${esc(c.description||"")}</div></td><td class="px-5 py-4 text-slate-500">${esc(c.slug)}</td><td class="px-5 py-4"><span class="px-2.5 py-1 rounded-full text-xs font-bold ${c.status==="active"?"bg-green-50 text-green-600":"bg-slate-100 text-slate-500"}">${esc(c.status)}</span></td><td class="px-5 py-4 text-right"><button onclick="editCategory('${c.id}')" class="text-blue font-bold mr-3">Edit</button><button onclick="deleteCategory('${c.id}')" class="text-red-600 font-bold">Delete</button></td></tr>`).join("");
+}
+
+function fillCategorySelects(){
+$("postCategory").innerHTML=`<option value="">Select Category</option>`+state.categories.filter(c=>c.status==="active").map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join("");
+$("postCategoryFilter").innerHTML=`<option value="">All Categories</option>`+state.categories.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join("");
+}
+
+$("newCategoryBtn").addEventListener("click",()=>{
+$("categoryForm").reset();$("categoryId").value="";$("categoryModalTitle").textContent="New Category";openModal("categoryModal");
+});
+$("closeCategoryModal").addEventListener("click",()=>closeModal("categoryModal"));
+$("cancelCategoryBtn").addEventListener("click",()=>closeModal("categoryModal"));
+$("categoryName").addEventListener("input",e=>{if(!$("categoryId").value)$("categorySlug").value=slugify(e.target.value)});
+
+window.editCategory=id=>{
+const c=state.categories.find(x=>x.id===id);if(!c)return;
+$("categoryId").value=c.id;$("categoryName").value=c.name;$("categorySlug").value=c.slug;$("categoryDescription").value=c.description||"";$("categoryIcon").value=c.icon||"";$("categoryStatus").value=c.status;$("categoryModalTitle").textContent="Edit Category";openModal("categoryModal");
+};
+
+$("categoryForm").addEventListener("submit",async e=>{
+e.preventDefault();
+const id=$("categoryId").value;
+const payload={name:$("categoryName").value.trim(),slug:$("categorySlug").value.trim(),description:$("categoryDescription").value.trim(),icon:$("categoryIcon").value.trim(),status:$("categoryStatus").value,updated_at:new Date().toISOString()};
+const r=id?await sb.from("categories").update(payload).eq("id",id):await sb.from("categories").insert(payload);
+if(r.error){toast(r.error.message,"error");return}
+toast(id?"Category updated":"Category created");closeModal("categoryModal");loadCategories();
+});
+
+window.deleteCategory=async id=>{
+if(!confirm("यो category delete गर्ने?"))return;
+const {error}=await sb.from("categories").delete().eq("id",id);
+if(error){toast(error.message,"error");return}
+toast("Category deleted");loadCategories();
+};
+
+async function loadPosts(){
+const {data,error}=await sb.from("posts").select("*,categories(id,name,slug)").is("deleted_at",null).order("created_at",{ascending:false});
+if(error){toast(error.message,"error");return}
+state.posts=data||[];renderPosts();
+}
+
+function renderPosts(){
+const q=($("postSearch").value||"").toLowerCase(),status=$("postStatusFilter").value,cat=$("postCategoryFilter").value;
+const rows=state.posts.filter(p=>(!q||p.title.toLowerCase().includes(q)||String(p.excerpt||"").toLowerCase().includes(q))&&(!status||p.status===status)&&(!cat||p.category_id===cat));
+if(!rows.length){$("postsTableBody").innerHTML=`<tr><td colspan="5" class="px-5 py-10 text-center text-slate-400">No posts found.</td></tr>`;return}
+$("postsTableBody").innerHTML=rows.map(p=>`<tr class="border-b border-slate-100 hover:bg-slate-50"><td class="px-5 py-4"><div class="flex items-center gap-3">${p.thumbnail?`<img src="${esc(p.thumbnail)}" class="w-12 h-12 rounded-lg object-cover">`:`<div class="w-12 h-12 rounded-lg bg-slate-100"></div>`}<div><div class="font-bold text-slate-700 line-clamp-2">${p.is_important?"⭐ ":""}${esc(p.title)}</div><div class="text-xs text-slate-400 mt-1">${p.published_at?new Date(p.published_at).toLocaleDateString():"Not published"}</div></div></div></td><td class="px-5 py-4 text-slate-500">${esc(p.categories?.name||"—")}</td><td class="px-5 py-4"><span class="px-2.5 py-1 rounded-full text-xs font-bold ${p.status==="published"?"bg-green-50 text-green-600":"bg-amber-50 text-amber-600"}">${esc(p.status)}</span></td><td class="px-5 py-4 text-slate-500">${p.views||0}</td><td class="px-5 py-4 text-right whitespace-nowrap"><button onclick="editPost('${p.id}')" class="text-blue font-bold mr-3">Edit</button><button onclick="toggleImportant('${p.id}',${!p.is_important})" class="text-amber-600 font-bold mr-3">${p.is_important?"Unimportant":"Important"}</button><button onclick="deletePost('${p.id}')" class="text-red-600 font-bold">Delete</button></td></tr>`).join("");
+}
+
+$("postSearch").addEventListener("input",renderPosts);
+$("postStatusFilter").addEventListener("change",renderPosts);
+$("postCategoryFilter").addEventListener("change",renderPosts);
+
+$("newPostBtn").addEventListener("click",()=>{
+$("postForm").reset();$("postId").value="";$("postModalTitle").textContent="New Post";$("postStatus").value="draft";$("postImportant").checked=false;fillCategorySelects();openModal("postModal");
+});
+$("closePostModal").addEventListener("click",()=>closeModal("postModal"));
+$("cancelPostBtn").addEventListener("click",()=>closeModal("postModal"));
+$("postTitle").addEventListener("input",e=>{if(!$("postId").value)$("postSlug").value=slugify(e.target.value)});
+
+window.editPost=id=>{
+const p=state.posts.find(x=>x.id===id);if(!p)return;
+$("postId").value=p.id;$("postTitle").value=p.title;$("postSlug").value=p.slug;$("postCategory").value=p.category_id||"";$("postStatus").value=p.status;$("postExcerpt").value=p.excerpt||"";$("postContent").value=p.content||"";$("postThumbnail").value=p.thumbnail||"";$("postReadingTime").value=p.reading_time||"";$("postSourceName").value=p.source_name||"";$("postSourceUrl").value=p.source_url||"";$("postSeoTitle").value=p.seo_title||"";$("postSeoDescription").value=p.seo_description||"";$("postKeywords").value=p.keywords||"";$("postImportant").checked=!!p.is_important;$("postModalTitle").textContent="Edit Post";openModal("postModal");
+};
+
+$("postForm").addEventListener("submit",async e=>{
+e.preventDefault();
+const id=$("postId").value,status=$("postStatus").value;
+const payload={title:$("postTitle").value.trim(),slug:$("postSlug").value.trim(),category_id:$("postCategory").value||null,status,excerpt:$("postExcerpt").value.trim(),content:$("postContent").value,thumbnail:$("postThumbnail").value.trim()||null,reading_time:Number($("postReadingTime").value)||null,source_name:$("postSourceName").value.trim()||null,source_url:$("postSourceUrl").value.trim()||null,seo_title:$("postSeoTitle").value.trim()||null,seo_description:$("postSeoDescription").value.trim()||null,keywords:$("postKeywords").value.trim()||null,is_important:$("postImportant").checked,updated_at:new Date().toISOString()};
+if(status==="published"&&!id)payload.published_at=new Date().toISOString();
+if(status==="published"&&id){const old=state.posts.find(x=>x.id===id);if(!old?.published_at)payload.published_at=new Date().toISOString()}
+const r=id?await sb.from("posts").update(payload).eq("id",id):await sb.from("posts").insert(payload);
+if(r.error){toast(r.error.message,"error");return}
+toast(id?"Post updated":"Post created");closeModal("postModal");await loadPosts();loadDashboard();
+});
+
+window.toggleImportant=async(id,value=>{
+const {error}=await sb.from("posts").update({is_important:value,updated_at:new Date().toISOString()}).eq("id",id);
+if(error){toast(error.message,"error");return}
+toast(value?"Marked important":"Removed important");loadPosts();
+});
+
+window.deletePost=async id=>{
+if(!confirm("यो post delete गर्ने?"))return;
+const {error}=await sb.from("posts").update({deleted_at:new Date().toISOString(),updated_at:new Date().toISOString()}).eq("id",id);
+if(error){toast(error.message,"error");return}
+toast("Post deleted");loadPosts();loadDashboard();
+};
+
+async function loadComments(){
+const {data,error}=await sb.from("comments").select("*,posts(id,title)").order("created_at",{ascending:false});
+if(error){toast(error.message,"error");return}
+state.comments=data||[];renderComments();
+}
+
+function renderComments(){
+const q=($("commentSearch").value||"").toLowerCase(),status=$("commentStatusFilter").value;
+const rows=state.comments.filter(c=>(!q||c.name.toLowerCase().includes(q)||c.comment.toLowerCase().includes(q))&&(!status||c.status===status));
+if(!rows.length){$("commentsList").innerHTML=`<div class="card p-8 text-center text-slate-400">No comments found.</div>`;return}
+$("commentsList").innerHTML=rows.map(c=>`<div class="card p-5 shadow-card"><div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4"><div class="min-w-0"><div class="flex items-center gap-2 flex-wrap"><span class="font-extrabold text-slate-700">${esc(c.name)}</span><span class="text-xs text-slate-400">${new Date(c.created_at).toLocaleString()}</span><span class="px-2 py-1 rounded-full text-[11px] font-bold ${c.status==="approved"?"bg-green-50 text-green-600":c.status==="pending"?"bg-amber-50 text-amber-600":"bg-slate-100 text-slate-500"}">${esc(c.status)}</span></div><div class="text-xs text-blue mt-2">${esc(c.posts?.title||"Unknown post")}</div><p class="text-sm text-slate-600 mt-3 whitespace-pre-wrap">${esc(c.comment)}</p></div><div class="flex gap-2 shrink-0 flex-wrap"><button onclick="moderateComment('${c.id}','approved')" class="px-3 py-2 rounded-lg bg-green-50 text-green-600 text-xs font-bold">Approve</button><button onclick="moderateComment('${c.id}','hidden')" class="px-3 py-2 rounded-lg bg-slate-100 text-slate-600 text-xs font-bold">Hide</button><button onclick="moderateComment('${c.id}','spam')" class="px-3 py-2 rounded-lg bg-red-50 text-red-600 text-xs font-bold">Spam</button></div></div></div>`).join("");
+}
+
+$("commentSearch").addEventListener("input",renderComments);
+$("commentStatusFilter").addEventListener("change",renderComments);
+
+window.moderateComment=async(id,status)=>{
+const {error}=await sb.from("comments").update({status}).eq("id",id);
+if(error){toast(error.message,"error");return}
+toast("Comment updated");loadComments();loadDashboard();
+};
+
+async function loadAds(){
+const {data,error}=await sb.from("advertisements").select("*").order("priority",{ascending:false}).order("created_at",{ascending:false});
+if(error){toast(error.message,"error");return}
+state.ads=data||[];renderAds();
+}
+
+function renderAds(){
+if(!state.ads.length){$("adsTableBody").innerHTML=`<tr><td colspan="5" class="px-5 py-10 text-center text-slate-400">No advertisements found.</td></tr>`;return}
+$("adsTableBody").innerHTML=state.ads.map(a=>`<tr class="border-b border-slate-100"><td class="px-5 py-4"><div class="font-bold">${esc(a.title)}</div><div class="text-xs text-slate-400">${esc(a.target_url||"")}</div></td><td class="px-5 py-4 text-slate-500">${esc(a.placement)}</td><td class="px-5 py-4"><span class="px-2.5 py-1 rounded-full text-xs font-bold ${a.status==="active"?"bg-green-50 text-green-600":"bg-slate-100 text-slate-500"}">${esc(a.status)}</span></td><td class="px-5 py-4">${a.priority||0}</td><td class="px-5 py-4 text-right"><button onclick="editAd('${a.id}')" class="text-blue font-bold mr-3">Edit</button><button onclick="deleteAd('${a.id}')" class="text-red-600 font-bold">Delete</button></td></tr>`).join("");
+}
+
+$("newAdBtn").addEventListener("click",()=>{
+$("adForm").reset();$("adId").value="";$("adPriority").value=0;$("adStatus").value="disabled";$("adModalTitle").textContent="New Advertisement";openModal("adModal");
+});
+$("closeAdModal").addEventListener("click",()=>closeModal("adModal"));
+$("cancelAdBtn").addEventListener("click",()=>closeModal("adModal"));
+
+window.editAd=id=>{
+const a=state.ads.find(x=>x.id===id);if(!a)return;
+$("adId").value=a.id;$("adTitle").value=a.title;$("adImage").value=a.image||"";$("adTargetUrl").value=a.target_url||"";$("adPlacement").value=a.placement;$("adPriority").value=a.priority||0;$("adStatus").value=a.status;$("adStartDate").value=a.start_date||"";$("adEndDate").value=a.end_date||"";$("adModalTitle").textContent="Edit Advertisement";openModal("adModal");
+};
+
+$("adForm").addEventListener("submit",async e=>{
+e.preventDefault();
+const id=$("adId").value;
+const payload={title:$("adTitle").value.trim(),image:$("adImage").value.trim()||null,target_url:$("adTargetUrl").value.trim()||null,placement:$("adPlacement").value,status:$("adStatus").value,priority:Number($("adPriority").value)||0,start_date:$("adStartDate").value||null,end_date:$("adEndDate").value||null,updated_at:new Date().toISOString()};
+const r=id?await sb.from("advertisements").update(payload).eq("id",id):await sb.from("advertisements").insert(payload);
+if(r.error){toast(r.error.message,"error");return}
+toast(id?"Advertisement updated":"Advertisement created");closeModal("adModal");loadAds();
+});
+
+window.deleteAd=async id=>{
+if(!confirm("यो advertisement delete गर्ने?"))return;
+const {error}=await sb.from("advertisements").delete().eq("id",id);
+if(error){toast(error.message,"error");return}
+toast("Advertisement deleted");loadAds();
+};
+
+async function loadSettings(){
+const {data,error}=await sb.from("site_settings").select("*");
+if(error){toast(error.message,"error");return}
+const s={};(data||[]).forEach(x=>s[x.key]=x.value);
+$("settingSiteName").value=s.site_name||"Guide Nepal";
+$("settingTagline").value=s.tagline||"तपाईंको हरेक समस्याको सरल र स्टेप-बाइ-स्टेप समाधान";
+$("settingDescription").value=s.description||"";
+$("settingContactEmail").value=s.contact_email||"";
+$("settingFacebook").value=s.facebook||"";
+$("settingInstagram").value=s.instagram||"";
+}
+
+$("settingsForm").addEventListener("submit",async e=>{
+e.preventDefault();
+const values={site_name:$("settingSiteName").value.trim(),tagline:$("settingTagline").value.trim(),description:$("settingDescription").value.trim(),contact_email:$("settingContactEmail").value.trim(),facebook:$("settingFacebook").value.trim(),instagram:$("settingInstagram").value.trim()};
+for(const key in values){
+const {error}=await sb.from("site_settings").upsert({key,value:values[key]},{onConflict:"key"});
+if(error){toast(error.message,"error");return}
+}
+toast("Settings saved successfully");
+});
+
+async function loadDashboard(){
+const [posts,cats,comments]=await Promise.all([
+sb.from("posts").select("*,categories(id,name)").is("deleted_at",null).order("created_at",{ascending:false}),
+sb.from("categories").select("id").eq("status","active"),
+sb.from("comments").select("id").eq("status","pending")
+]);
+const allPosts=posts.data||[];
+$("statTotalPosts").textContent=allPosts.length;
+$("statPublishedPosts").textContent=allPosts.filter(x=>x.status==="published").length;
+$("statCategories").textContent=(cats.data||[]).length;
+$("statPendingComments").textContent=(comments.data||[]).length;
+const recent=allPosts.slice(0,6);
+$("dashboardRecentPosts").innerHTML=recent.length?recent.map(p=>`<div class="p-4 flex items-center justify-between gap-4"><div class="min-w-0"><div class="font-bold text-sm text-slate-700 line-clamp-2">${p.is_important?"⭐ ":""}${esc(p.title)}</div><div class="text-xs text-slate-400 mt-1">${esc(p.categories?.name||"Uncategorized")} · ${p.views||0} views</div></div><span class="shrink-0 px-2 py-1 rounded-full text-[10px] font-bold ${p.status==="published"?"bg-green-50 text-green-600":"bg-amber-50 text-amber-600"}">${p.status}</span></div>`).join(""):`<div class="p-8 text-center text-sm text-slate-400">No posts yet.</div>`;
+const important=allPosts.filter(x=>x.is_important).slice(0,6);
+$("dashboardImportantPosts").innerHTML=important.length?important.map(p=>`<div class="rounded-2xl border border-slate-200 p-4"><div class="text-[11px] font-bold text-red-600">IMPORTANT</div><div class="font-bold text-sm text-slate-700 mt-2 line-clamp-2">${esc(p.title)}</div><div class="text-xs text-slate-400 mt-2">${esc(p.categories?.name||"Uncategorized")}</div></div>`).join(""):`<div class="text-sm text-slate-400">No important posts yet.</div>`;
+}
+
+async function initializeAdmin(){
+await loadCategories();
+await loadPosts();
+await loadComments();
+await loadAds();
+await loadDashboard();
+await loadSettings();
+showSection("dashboard");
+}
+
+checkAdmin();
+</script>
+</body>
+                                                                                 </html>
