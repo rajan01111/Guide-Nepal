@@ -1,0 +1,88 @@
+<!doctype html><html lang="ne"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>Admin | Guide Nepal</title>
+<style>
+:root{--n:#0B2A4A;--b:#123F6D;--r:#D62828;--g:#F4B942}*{box-sizing:border-box}
+body{margin:0;font:16px/1.5 system-ui,sans-serif;background:#F7F9FC;color:#17212B}.w{max-width:900px;margin:auto;padding:12px}
+nav{background:var(--n);position:sticky;top:0;display:flex;overflow-x:auto;gap:2px;padding:6px}nav button{background:none;color:#fff;border:0;padding:10px 12px;white-space:nowrap;border-radius:6px}nav button.on{background:var(--b)}
+input,textarea,select{font:inherit;width:100%;padding:10px;border:1px solid #c5ced8;border-radius:8px;margin:4px 0 10px;background:#fff}
+button{font:inherit;background:var(--r);color:#fff;border:0;border-radius:8px;padding:10px 14px;cursor:pointer;min-height:42px}button.o{background:#fff;color:var(--b);border:1px solid var(--b)}button.s{padding:6px 10px;min-height:34px;font-size:14px}
+.c{background:#fff;border:1px solid #e1e7ee;border-radius:10px;padding:12px;margin:10px 0}.g{display:grid;grid-template-columns:1fr 1fr;gap:8px}.g b{font-size:26px;color:var(--n);display:block}
+.row{display:flex;gap:6px;flex-wrap:wrap}label{font-size:14px;font-weight:600}.m{font-size:13px;color:#5b6773}.tb{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:4px}
+#ed{min-height:280px;background:#fff;border:1px solid #c5ced8;border-radius:8px;padding:10px}#ed img{max-width:100%}#ed table{border-collapse:collapse}#ed td{border:1px solid #999;padding:6px}.callout{background:#FFF6DD;border-left:5px solid var(--g);padding:8px 12px}
+#toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:var(--n);color:#fff;padding:10px 18px;border-radius:8px;display:none}
+</style></head><body><div id="toast"></div><div id="app"></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="config.js"></script>
+<script>
+const sb=supabase.createClient(CFG.URL,CFG.KEY),A=document.getElementById('app');
+const E=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const $=id=>document.getElementById(id),V=id=>$(id).value;
+function T(m){const t=$('toast');t.textContent=m;t.style.display='block';setTimeout(()=>t.style.display='none',2500)}
+const TABS={dash:'Dashboard',posts:'Posts',cats:'Categories',cmts:'Comments',ads:'Ads',set:'Settings'};
+async function init(){const{data:{session}}=await sb.auth.getSession();if(!session)return login();
+const{data:ok}=await sb.rpc('is_admin');if(!ok){await sb.auth.signOut();return login('यो खाता admin होइन।')}shell();go('dash')}
+function login(m=''){A.innerHTML=`<div class="w"><h2>Guide Nepal Admin</h2><div class="c"><label>Email</label><input id="em" type="email" autocomplete="username"><label>Password</label><input id="pw" type="password" autocomplete="current-password"><button onclick="doLogin()">Login</button><p style="color:#D62828">${m}</p></div></div>`}
+async function doLogin(){const{error}=await sb.auth.signInWithPassword({email:V('em'),password:V('pw')});if(error)return login('Email वा password मिलेन।');init()}
+function shell(){A.innerHTML=`<nav>${Object.entries(TABS).map(([k,v])=>`<button id="t_${k}" onclick="go('${k}')">${v}</button>`).join('')}<button onclick="sb.auth.signOut().then(init)">Logout</button></nav><div class="w" id="main"></div>`}
+function go(k,a){document.querySelectorAll('nav button').forEach(b=>b.classList.remove('on'));$('t_'+k)?.classList.add('on');({dash,posts,cats,cmts,ads,set})[k](a)}
+const M=h=>$('main').innerHTML=h;
+async function cnt(t,f){let q=sb.from(t).select('*',{count:'exact',head:true});if(f)q=f(q);return(await q).count||0}
+async function dash(){const today=new Date().toISOString().slice(0,10);
+const n=await Promise.all([cnt('posts',q=>q.is('deleted_at',null)),cnt('posts',q=>q.eq('status','published').is('deleted_at',null)),cnt('posts',q=>q.eq('status','draft').is('deleted_at',null)),cnt('posts',q=>q.eq('is_important',true).is('deleted_at',null)),cnt('categories'),cnt('comments',q=>q.eq('status','pending')),cnt('likes'),cnt('advertisements',q=>q.eq('status','active'))]);
+const L=['Total Posts','Published','Drafts','Important','Categories','Pending Comments','Likes','Active Ads'];
+const{data:r}=await sb.from('posts').select('id,title,status,updated_at').is('deleted_at',null).order('updated_at',{ascending:false}).limit(5);
+M(`<div class="row"><button onclick="go('posts','new')">+ New Post</button><button class="o" onclick="go('posts')">Manage Posts</button><button class="o" onclick="go('cmts')">Comments</button><button class="o" onclick="go('ads')">Ads</button></div><div class="g" style="margin-top:12px">${n.map((x,i)=>`<div class="c"><b>${x}</b>${L[i]}</div>`).join('')}</div><h3>Recent</h3>${(r||[]).map(p=>`<div class="c">${E(p.title)} <span class="m">${p.status}</span></div>`).join('')||'<div class="c">No posts yet.</div>'}`)}
+/* POSTS */
+async function posts(a){if(a)return editor(a);
+const{data}=await sb.from('posts').select('*,categories(name)').is('deleted_at',null).order('updated_at',{ascending:false});window.PL=data||[];
+M(`<div class="row"><button onclick="go('posts','new')">+ New Post</button></div><input id="fq" placeholder="Search" oninput="plist()"><select id="fs" onchange="plist()"><option value="">All status</option><option>draft</option><option>published</option></select><div id="pl"></div>`);plist()}
+function plist(){const q=V('fq').toLowerCase(),s=V('fs');$('pl').innerHTML=PL.filter(p=>p.title.toLowerCase().includes(q)&&(!s||p.status==s)).map(p=>`<div class="c"><b>${E(p.title)}</b><div class="m">${E(p.categories?.name||'—')} · ${p.status} · ${p.is_important?'⭐ Important · ':''}${p.views} views</div><div class="row" style="margin-top:6px"><button class="s o" onclick="go('posts','${p.id}')">Edit</button><button class="s o" onclick="pset('${p.id}',{status:'${p.status=='published'?'draft':'published'}'${p.status=='published'?'':',published_at:new Date().toISOString()'}})">${p.status=='published'?'Unpublish':'Publish'}</button><button class="s o" onclick="pset('${p.id}',{is_important:${!p.is_important}})">${p.is_important?'Remove ⭐':'Mark ⭐'}</button><button class="s" onclick="pdel('${p.id}')">Delete</button></div></div>`).join('')||'<div class="c">No posts.</div>'}
+async function pset(id,o){o.updated_at=new Date().toISOString();const{error}=await sb.from('posts').update(o).eq('id',id);T(error?error.message:'Saved');posts()}
+async function pdel(id){if(!confirm('Are you sure you want to delete this post?'))return;await sb.from('posts').update({deleted_at:new Date().toISOString(),status:'draft'}).eq('id',id);T('Deleted');posts()}
+const slug=t=>{const s=t.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');return s||'post-'+Date.now().toString(36)};
+async function editor(id){const{data:c}=await sb.from('categories').select('*').order('name');let p={status:'draft',content:''};if(id!='new')p=(await sb.from('posts').select('*').eq('id',id).single()).data;window.EP=p;
+const f=(i,l,v='',t='text')=>`<label>${l}</label><input id="${i}" type="${t}" value="${E(v)}">`;
+M(`<h3>${id=='new'?'New Post':'Edit Post'}</h3>${f('ti','Title *',p.title)}${f('sl','Slug (URL)',p.slug)}<label>Category *</label><select id="ca"><option value="">—</option>${(c||[]).map(x=>`<option value="${x.id}" ${x.id==p.category_id?'selected':''}>${E(x.name)}</option>`).join('')}</select>
+<label>Short description</label><textarea id="ex" rows="2">${E(p.excerpt)}</textarea>
+<label>Content *</label><div class="tb">${[['H2','formatBlock','h2'],['H3','formatBlock','h3'],['P','formatBlock','p'],['B','bold'],['I','italic'],['• List','insertUnorderedList'],['1. List','insertOrderedList'],['Quote','formatBlock','blockquote']].map(([l,c,v])=>`<button class="s o" onmousedown="event.preventDefault();document.execCommand('${c}',false,${v?`'${v}'`:'null'})">${l}</button>`).join('')}
+<button class="s o" onmousedown="event.preventDefault();lnk()">Link</button><button class="s o" onmousedown="event.preventDefault();document.execCommand('insertHTML',false,'<div class=&quot;callout&quot;>Important note</div><p></p>')">Callout</button><button class="s o" onmousedown="event.preventDefault();document.execCommand('insertHTML',false,'<table><tr><td>A</td><td>B</td></tr><tr><td>C</td><td>D</td></tr></table><p></p>')">Table</button><button class="s o" onclick="$('imf').click()">Image</button><input id="imf" type="file" accept="image/*" hidden onchange="upl(this,u=>document.execCommand('insertImage',false,u))"></div>
+<div id="ed" contenteditable="true">${p.content}</div><br>
+<label>Featured image</label><input id="th" placeholder="Image URL" value="${E(p.thumbnail)}"><input type="file" accept="image/*" onchange="upl(this,u=>$('th').value=u)">
+<div class="g"><div>${f('rt','Reading time (min)',p.reading_time,'number')}</div><div><label>Status</label><select id="st"><option value="draft" ${p.status=='draft'?'selected':''}>Draft</option><option value="published" ${p.status=='published'?'selected':''}>Published</option></select></div></div>
+<label><input type="checkbox" id="im" style="width:auto" ${p.is_important?'checked':''}> ⭐ Mark as Important</label>
+${f('sn','Source name',p.source_name)}${f('su','Source URL',p.source_url)}${f('lv','Last verified',p.last_verified_at,'date')}${f('sk','SEO title',p.seo_title)}<label>SEO description</label><textarea id="sd" rows="2">${E(p.seo_description)}</textarea>${f('kw','Keywords (comma separated)',p.keywords)}
+<div class="row"><button onclick="psave()">Save</button><button class="o" onclick="go('posts')">Back</button></div>`)}
+function lnk(){const u=prompt('URL (https://...)');if(u)document.execCommand('createLink',false,u)}
+async function upl(inp,cb){const f=inp.files[0];if(!f)return;if(!f.type.startsWith('image/')||f.size>8e6)return T('Image only, max 8MB');T('Uploading...');
+const im=await createImageBitmap(f),s=Math.min(1,1200/im.width),cv=document.createElement('canvas');cv.width=im.width*s;cv.height=im.height*s;cv.getContext('2d').drawImage(im,0,0,cv.width,cv.height);
+const bl=await new Promise(r=>cv.toBlob(r,'image/jpeg',.8)),n=Date.now()+'-'+Math.random().toString(36).slice(2,7)+'.jpg';
+const{error}=await sb.storage.from('media').upload(n,bl,{contentType:'image/jpeg'});if(error)return T(error.message);cb(sb.storage.from('media').getPublicUrl(n).data.publicUrl);T('Uploaded')}
+async function psave(){const t=V('ti').trim(),ct=$('ed').innerHTML.trim();if(!t||!V('ca')||!ct)return T('Title, Category, Content required');
+const o={title:t,slug:V('sl').trim()||slug(t),category_id:V('ca'),excerpt:V('ex'),content:ct,thumbnail:V('th')||null,reading_time:+V('rt')||null,status:V('st'),is_important:$('im').checked,source_name:V('sn')||null,source_url:V('su')||null,last_verified_at:V('lv')||null,seo_title:V('sk')||null,seo_description:V('sd')||null,keywords:V('kw')||null,updated_at:new Date().toISOString()};
+if(o.status=='published'&&!EP.published_at)o.published_at=new Date().toISOString();
+const{error}=EP.id?await sb.from('posts').update(o).eq('id',EP.id):await sb.from('posts').insert(o);if(error)return T(error.message.includes('duplicate')?'Slug already used':error.message);T('Saved');go('posts')}
+/* CATEGORIES */
+async function cats(){const{data}=await sb.from('categories').select('*').order('name');
+M(`<div class="c"><h3>Add category</h3><input id="cn" placeholder="Name"><input id="cs" placeholder="Slug (english, e.g. government-services)"><input id="cd" placeholder="Description"><input id="ci" placeholder="Icon (emoji)"><button onclick="csave()">Add</button></div>${(data||[]).map(c=>`<div class="c"><b>${E(c.icon||'')} ${E(c.name)}</b> <span class="m">/${E(c.slug)} · ${c.status}</span><div class="row" style="margin-top:6px"><button class="s o" onclick="cedit('${c.id}','${E(c.name).replace(/'/g,'')}')">Rename</button><button class="s o" onclick="cset('${c.id}','${c.status=='active'?'disabled':'active'}')">${c.status=='active'?'Disable':'Enable'}</button><button class="s" onclick="cdel('${c.id}')">Delete</button></div></div>`).join('')||'<div class="c">No categories yet.</div>'}`)}
+async function csave(){const n=V('cn').trim();if(!n)return T('Name required');const{error}=await sb.from('categories').insert({name:n,slug:V('cs').trim()||slug(n),description:V('cd'),icon:V('ci')});T(error?error.message:'Added');cats()}
+async function cedit(id,o){const n=prompt('New name',o);if(n){await sb.from('categories').update({name:n,updated_at:new Date().toISOString()}).eq('id',id);cats()}}
+async function cset(id,s){await sb.from('categories').update({status:s}).eq('id',id);cats()}
+async function cdel(id){const n=await cnt('posts',q=>q.eq('category_id',id));if(!confirm(n?`Warning: ${n} post(s) use this category. Delete anyway?`:'Delete this category?'))return;
+if(n)await sb.from('posts').update({category_id:null}).eq('category_id',id);await sb.from('categories').delete().eq('id',id);cats()}
+/* COMMENTS */
+async function cmts(){const{data}=await sb.from('comments').select('*,posts(title)').neq('status','deleted').order('created_at',{ascending:false}).limit(100);
+M(`<h3>Comments</h3>${(data||[]).map(c=>`<div class="c"><b>${E(c.name)}</b> <span class="m">on ${E(c.posts?.title)} · ${new Date(c.created_at).toLocaleDateString()} · ${c.status}</span><p>${E(c.comment)}</p><div class="row">${[['approved','Approve'],['hidden','Hide'],['spam','Spam'],['deleted','Delete']].map(([s,l])=>`<button class="s ${s=='approved'?'':'o'}" onclick="cmset('${c.id}','${s}')">${l}</button>`).join('')}</div></div>`).join('')||'<div class="c">No comments.</div>'}`)}
+async function cmset(id,s){await sb.from('comments').update({status:s}).eq('id',id);cmts()}
+/* ADS */
+const PL2=[['home_top','Home: top'],['home_mid','Home: between Important & Latest'],['home_bottom','Home: bottom'],['cat_top','Category: top'],['cat_bottom','Category: bottom'],['post_before','Article: before content'],['post_after','Article: after content']];
+async function ads(){const{data}=await sb.from('advertisements').select('*').order('created_at',{ascending:false});
+M(`<div class="c"><h3>New advertisement</h3><input id="at" placeholder="Ad title"><label>Image</label><input id="ai" placeholder="Image URL"><input type="file" accept="image/*" onchange="upl(this,u=>$('ai').value=u)"><input id="au" placeholder="Destination URL"><select id="ap">${PL2.map(([v,l])=>`<option value="${v}">${l}</option>`).join('')}</select><label>Start</label><input id="as" type="date"><label>End</label><input id="ae" type="date"><label>Priority (higher shows first)</label><input id="ar" type="number" value="0"><button onclick="asave()">Create (disabled)</button></div>
+${(data||[]).map(a=>`<div class="c"><b>${E(a.title)}</b> <span class="m">${a.placement} · ${a.status} · prio ${a.priority} · ${a.start_date||'—'} → ${a.end_date||'—'}</span><div class="row" style="margin-top:6px"><button class="s o" onclick="aset('${a.id}','${a.status=='active'?'disabled':'active'}')">${a.status=='active'?'Disable':'Enable'}</button><button class="s" onclick="adel('${a.id}')">Delete</button></div></div>`).join('')}`)}
+async function asave(){if(!V('at')||!V('ai'))return T('Title & image required');const{error}=await sb.from('advertisements').insert({title:V('at'),image:V('ai'),target_url:V('au'),placement:V('ap'),start_date:V('as')||null,end_date:V('ae')||null,priority:+V('ar')||0});T(error?error.message:'Created. Press Enable.');ads()}
+async function aset(id,s){await sb.from('advertisements').update({status:s,updated_at:new Date().toISOString()}).eq('id',id);ads()}
+async function adel(id){if(confirm('Delete this ad?')){await sb.from('advertisements').delete().eq('id',id);ads()}}
+/* SETTINGS */
+const SK=[['contact_email','Contact email'],['facebook','Facebook URL'],['tiktok','TikTok URL'],['youtube','YouTube URL'],['page_about','About page (HTML/text)'],['page_privacy','Privacy page'],['page_terms','Terms page'],['page_disclaimer','Disclaimer (blank = default)']];
+async function set(){const{data}=await sb.from('site_settings').select('*'),s=Object.fromEntries((data||[]).map(r=>[r.key,r.value]));
+M(`<h3>Settings</h3>${SK.map(([k,l])=>`<label>${l}</label>${k.startsWith('page')?`<textarea id="s_${k}" rows="4">${E(s[k])}</textarea>`:`<input id="s_${k}" value="${E(s[k])}">`}`).join('')}<button onclick="sset()">Save settings</button>`)}
+async function sset(){const rows=SK.map(([k])=>({key:k,value:V('s_'+k)}));const{error}=await sb.from('site_settings').upsert(rows);T(error?error.message:'Saved')}
+init();
+</script></body></html>
