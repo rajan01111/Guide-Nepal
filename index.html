@@ -1,93 +1,47 @@
-<!doctype html><html lang="ne"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Guide Nepal</title><meta name="description" content="सरकारी सेवा, कानुन, अधिकार, रोजगारी, शिक्षा र सुरक्षाका उपयोगी जानकारी सरल भाषामा।">
-<style>
-:root{--n:#0B2A4A;--b:#123F6D;--r:#D62828;--g:#F4B942;--bg:#F7F9FC;--t:#17212B}
-*{box-sizing:border-box}body{margin:0;font:17px/1.75 system-ui,"Noto Sans Devanagari",sans-serif;background:var(--bg);color:var(--t)}
-a{color:var(--b)}.w{max-width:880px;margin:auto;padding:0 16px}
-header{background:var(--n);position:sticky;top:0;z-index:5}header .w{display:flex;align-items:center;justify-content:space-between;height:56px}
-header a{color:#fff;text-decoration:none;font-weight:700;margin-left:16px}.logo{background:var(--r);padding:2px 10px;border-radius:6px;margin:0!important;letter-spacing:1px}
-h1,h2,h3{line-height:1.3;color:var(--n)}h2{margin:32px 0 12px;border-left:5px solid var(--g);padding-left:10px}
-.hero{background:var(--n);color:#fff;padding:36px 0}.hero h1{color:#fff;font-size:30px;margin:0 0 8px}.hero p{margin:0 0 16px;opacity:.9}
-form.s{display:flex;gap:8px}input,textarea,select{font:inherit;padding:12px;border:1px solid #c5ced8;border-radius:8px;width:100%;background:#fff}
-button,.btn{font:inherit;background:var(--r);color:#fff;border:0;border-radius:8px;padding:12px 18px;cursor:pointer;text-decoration:none;display:inline-block;min-height:44px}
-button.o{background:#fff;color:var(--b);border:1px solid var(--b)}:focus-visible{outline:3px solid var(--g);outline-offset:2px}
-.card{display:flex;gap:12px;background:#fff;border:1px solid #e1e7ee;border-radius:10px;padding:12px;margin:12px 0;text-decoration:none;color:var(--t)}
-.card img{width:96px;height:96px;object-fit:cover;border-radius:8px;flex:none}.card b{color:var(--n)}.m{font-size:14px;color:#5b6773}.cat{color:var(--r);font-size:14px;font-weight:600}
-.cats{display:grid;grid-template-columns:1fr 1fr;gap:10px}.cats a{background:#fff;border:1px solid #e1e7ee;border-top:4px solid var(--b);padding:14px;border-radius:8px;text-decoration:none;font-weight:600}
-.ad{margin:16px 0;text-align:center}.ad small{display:block;color:#5b6773;font-size:12px}.ad img{max-width:100%;border-radius:8px}
-.empty{background:#fff;border:1px dashed #b7c2cf;padding:20px;border-radius:10px;text-align:center;color:#5b6773}
-.art img{max-width:100%;height:auto}.art table{border-collapse:collapse;width:100%;display:block;overflow-x:auto}.art td,.art th{border:1px solid #c5ced8;padding:8px}
-.callout{background:#FFF6DD;border-left:5px solid var(--g);padding:12px 16px;border-radius:6px}blockquote{border-left:4px solid var(--b);margin:0;padding-left:14px;color:#41505e}
-.row{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}footer{background:var(--n);color:#d8e2ee;margin-top:40px;padding:24px 0;font-size:15px}footer a{color:#fff;margin-right:12px;display:inline-block}
-.cm{background:#fff;border:1px solid #e1e7ee;border-radius:8px;padding:10px 14px;margin:8px 0}.hp{position:absolute;left:-9999px}
-</style></head><body>
-<header><div class="w"><a href="#/" class="logo">GN</a><nav><a href="#/categories">श्रेणी</a><a href="#/guides?imp=1">महत्त्वपूर्ण</a><a href="#/guides">सबै</a></nav></div></header>
-<main id="app"></main>
-<footer><div class="w"><b>Guide Nepal</b><br>सरल जानकारी। सही प्रक्रिया। सजिलो समाधान।<p id="ft"></p><p>
-<a href="#/">Home</a><a href="#/guides">All Guides</a><a href="#/categories">Categories</a><a href="#/about">About</a><a href="#/contact">Contact</a><a href="#/privacy">Privacy</a><a href="#/terms">Terms</a><a href="#/disclaimer">Disclaimer</a></p>© Guide Nepal. All rights reserved.</div></footer>
+<!doctype html><html lang="ne"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Guide Nepal</title><meta name="description" content="Guide Nepal">
+<script>if(localStorage.gnt=='d'||(!localStorage.gnt&&matchMedia('(prefers-color-scheme:dark)').matches))document.documentElement.classList.add('dark')</script>
+<link href="https://fonts.googleapis.com/css2?family=Mukta:wght@400;600;800&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>tailwind.config={darkMode:'class',theme:{extend:{fontFamily:{sans:['Mukta','system-ui','sans-serif']},colors:{navy:'#0B2A4A',nb:'#123F6D',red:'#D62828',gold:'#F4B942'}}}}</script>
+<style type="text/tailwindcss">
+@layer components{
+.card{@apply relative flex gap-3 p-3 my-3 rounded-2xl bg-white dark:bg-[#10243a] border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition no-underline text-slate-800 dark:text-slate-100}
+.card.imp{@apply border-l-4 border-l-red bg-amber-50 dark:bg-[#2a2415]}
+.btn{@apply inline-flex items-center justify-center gap-1 px-5 py-3 rounded-full bg-red text-white font-semibold min-h-[44px] cursor-pointer border-0 hover:brightness-110 active:scale-95 transition no-underline}
+.btn.o{@apply bg-transparent text-nb dark:text-gold border border-nb dark:border-gold}
+.ib{@apply w-11 h-11 grid place-items-center rounded-full text-white/90 hover:bg-white/15 text-xl cursor-pointer border-0 bg-transparent}
+.inp{@apply w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-[#0d1d30] text-slate-900 dark:text-slate-100 my-1}
+.h2{@apply flex items-center gap-2 text-2xl font-extrabold text-navy dark:text-white mt-10 mb-3 before:content-[''] before:w-1.5 before:h-7 before:rounded before:bg-red}
+.cat{@apply inline-block text-sm font-semibold px-3 rounded-full bg-red/10 text-red no-underline}
+.empty{@apply p-6 rounded-2xl border-2 border-dashed border-slate-300 dark:border-slate-600 text-center text-slate-500 dark:text-slate-400}
+.art{@apply text-lg leading-8}.art h2{@apply text-2xl font-extrabold mt-8 mb-2 text-navy dark:text-white}.art h3{@apply text-xl font-bold mt-6 mb-2 text-navy dark:text-white}.art p{@apply my-3}
+.art ul{@apply list-disc pl-6 my-3}.art ol{@apply list-decimal pl-6 my-3}.art li{@apply my-1}.art a{@apply text-nb dark:text-gold underline}.art img{@apply max-w-full h-auto rounded-xl my-3}
+.art blockquote{@apply border-l-4 border-nb pl-4 italic text-slate-600 dark:text-slate-300 my-3}.art table{@apply block overflow-x-auto border-collapse}.art td,.art th{@apply border border-slate-300 dark:border-slate-600 p-2}
+.callout{@apply bg-amber-50 dark:bg-[#2a2415] border-l-4 border-gold p-4 rounded-lg my-3}
+.fl a{@apply block my-1.5 text-slate-200 hover:text-gold no-underline}
+}</style></head>
+<body class="font-sans bg-slate-50 dark:bg-[#0a1624] text-slate-800 dark:text-slate-200 antialiased">
+<header class="sticky top-0 z-20 bg-navy/95 backdrop-blur border-b-2 border-gold"><div class="max-w-4xl mx-auto px-3 h-16 flex items-center justify-between">
+<a href="#/" class="flex items-center gap-2 no-underline"><span class="bg-red text-white font-extrabold px-2.5 py-1 rounded-lg tracking-wider">GN</span><span class="text-white font-extrabold text-lg">Guide Nepal</span></a>
+<nav class="hidden md:flex gap-1 text-white font-semibold" id="dn"></nav>
+<div class="flex items-center"><button class="ib" aria-label="Search" onclick="location.hash='#/guides';setTimeout(()=>document.getElementById('gq')?.focus(),300)">🔍</button><button class="ib !text-base font-bold" id="lb" aria-label="Language" onclick="setL()"></button><button class="ib" id="tb" aria-label="Theme" onclick="setT()"></button><button class="ib md:hidden" aria-label="Menu" onclick="mn.classList.toggle('hidden')">☰</button></div></div>
+<nav id="mn" class="hidden md:hidden bg-nb px-3 pb-3 text-white font-semibold"></nav></header>
+<main id="app" class="min-h-[70vh]"></main>
+<footer class="bg-navy text-slate-300 border-t-4 border-gold mt-14 pt-10 pb-6"><div class="max-w-4xl mx-auto px-4"><div class="flex items-center gap-2 mb-1"><span class="bg-red text-white font-extrabold px-2.5 py-1 rounded-lg">GN</span><b class="text-white text-xl">Guide Nepal</b></div><p id="tag" class="mb-6"></p>
+<div class="grid grid-cols-2 md:grid-cols-3 gap-6 fl"><div><h4 class="text-gold font-bold mb-2" id="f1"></h4><div id="fa"></div></div><div><h4 class="text-gold font-bold mb-2" id="f2"></h4><div id="fb"></div></div><div class="col-span-2 md:col-span-1"><h4 class="text-gold font-bold mb-2" id="f3"></h4><div id="ft"></div></div></div>
+<p class="text-sm text-slate-400 mt-8 pt-4 border-t border-slate-700">© Guide Nepal. All rights reserved.</p></div></footer>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="config.js"></script>
 <script>
-const sb=supabase.createClient(CFG.URL,CFG.KEY),A=document.getElementById('app'),PS=10;
+const sb=supabase.createClient(CFG.URL,CFG.KEY),A=document.getElementById('app'),PS=10;let L=localStorage.gnl||'ne',ST={};
 const E=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const D=d=>d?new Date(d).toLocaleDateString('ne-NP'):'';let ST={};
-const em=t=>`<div class="empty">${t}</div>`;
-const card=p=>`<a class="card" href="#/p/${E(p.slug)}">${p.thumbnail?`<img loading="lazy" alt="${E(p.title)}" src="${E(p.thumbnail)}">`:''}<div><span class="cat">${E(p.categories?.name||'')}</span><br><b>${E(p.title)}</b><div>${E(p.excerpt||'')}</div><div class="m">${D(p.published_at)}${p.updated_at&&D(p.updated_at)!=D(p.published_at)?' · अद्यावधिक '+D(p.updated_at):''}${p.reading_time?' · '+p.reading_time+' मिनेट':''}</div></div></a>`;
-const SEL='*,categories(name,slug)';
-async function ad(pl){const{data}=await sb.from('advertisements').select('*').eq('placement',pl).order('priority',{ascending:false}).limit(1);const a=data?.[0];if(!a||!a.image)return'';
-return`<div class="w ad"><small>विज्ञापन</small><a href="${E(a.target_url||'#')}" rel="sponsored noopener" target="_blank"><img loading="lazy" alt="${E(a.title)}" src="${E(a.image)}"></a></div>`}
-function seo(t,d){document.title=(t?t+' | ':'')+'Guide Nepal';if(d)document.querySelector('meta[name=description]').content=d}
-async function home(){seo('');
-const[im,la,ct]=await Promise.all([sb.from('posts').select(SEL).eq('is_important',true).order('updated_at',{ascending:false}).limit(5),sb.from('posts').select(SEL).order('published_at',{ascending:false}).limit(5),sb.from('categories').select('*').order('name')]);
-A.innerHTML=`<section class="hero"><div class="w"><h1>नेपाल बुझ्न सजिलो बनाऔँ।</h1><p>सरकारी सेवा, कानुन, अधिकार, रोजगारी, शिक्षा, सुरक्षा र दैनिक जीवनका उपयोगी जानकारी सरल भाषामा।</p>
-<form class="s" onsubmit="location.hash='#/search?q='+encodeURIComponent(this.q.value);return false"><input name="q" aria-label="खोज्नुहोस्" placeholder="तपाईं के खोज्दै हुनुहुन्छ?"><button>खोज्नुहोस्</button></form>
-<p class="m" style="color:#cfe0f2;margin-top:8px">नागरिकता · पासपोर्ट · राष्ट्रिय परिचयपत्र · वैदेशिक रोजगार</p></div></section>
-${await ad('home_top')}<div class="w"><h2>महत्त्वपूर्ण जानकारी</h2>${im.data?.length?im.data.map(card).join(''):em('हाल कुनै महत्त्वपूर्ण सूचना छैन।')}</div>${await ad('home_mid')}
-<div class="w"><h2>नयाँ जानकारी</h2>${la.data?.length?la.data.map(card).join(''):em('अहिले कुनै जानकारी प्रकाशित गरिएको छैन।')}
-<h2>श्रेणीहरू</h2>${ct.data?.length?`<div class="cats">${ct.data.map(c=>`<a href="#/c/${E(c.slug)}">${E(c.icon||'')} ${E(c.name)}</a>`).join('')}</div>`:em('अहिले कुनै श्रेणी छैन।')}
-<p style="text-align:center;margin:28px 0"><a class="btn" href="#/guides">सबै गाइडहरू हेर्नुहोस्</a></p></div>${await ad('home_bottom')}`}
-async function list(title,o={}){const pg=+(o.p||1)-1;let q=sb.from('posts').select(SEL,{count:'exact'}).order('published_at',{ascending:false}).range(pg*PS,pg*PS+PS-1);
-if(o.cat)q=q.eq('category_id',o.cat);if(o.imp)q=q.eq('is_important',true);
-if(o.q){const t=o.q.replace(/[,()%*]/g,' ').trim();q=q.or(`title.ilike.%${t}%,excerpt.ilike.%${t}%,content.ilike.%${t}%,keywords.ilike.%${t}%`)}
-const{data,count}=await q;const base=location.hash.split('?')[0],ps=new URLSearchParams(location.hash.split('?')[1]||'');
-const lk=n=>{ps.set('p',n);return base+'?'+ps};
-A.innerHTML=`${o.top||''}<div class="w"><h1>${title}</h1>${o.desc?`<p>${E(o.desc)}</p>`:''}${o.filter||''}${data?.length?data.map(card).join(''):em(o.empty||'अहिले कुनै जानकारी प्रकाशित गरिएको छैन।')}
-<div class="row">${pg>0?`<a class="btn o" href="${lk(pg)}">← अघिल्लो</a>`:''}${(pg+1)*PS<count?`<a class="btn" href="${lk(pg+2)}">अर्को →</a>`:''}</div></div>${o.bot||''}`}
-async function cat(slug,p){const{data:c}=await sb.from('categories').select('*').eq('slug',slug).maybeSingle();if(!c)return nf();seo(c.name,c.description);
-await list(E(c.name),{cat:c.id,desc:c.description,p,empty:'यस श्रेणीमा अहिले कुनै गाइड छैन।',top:await ad('cat_top'),bot:await ad('cat_bottom')})}
-async function cats(){const{data}=await sb.from('categories').select('*').order('name');A.innerHTML=`<div class="w"><h1>श्रेणीहरू</h1>${data?.length?`<div class="cats">${data.map(c=>`<a href="#/c/${E(c.slug)}">${E(c.icon||'')} ${E(c.name)}</a>`).join('')}</div>`:em('अहिले कुनै श्रेणी छैन।')}</div>`}
-async function guides(q){const{data:c}=await sb.from('categories').select('*').order('name');
-await list('सबै गाइडहरू',{p:q.get('p'),imp:q.get('imp'),filter:`<select aria-label="श्रेणी" onchange="location.hash=this.value?'#/c/'+this.value:'#/guides'"><option value="">सबै श्रेणी</option>${(c||[]).map(x=>`<option value="${E(x.slug)}">${E(x.name)}</option>`).join('')}</select>
-<form class="s" style="margin-top:8px" onsubmit="location.hash='#/search?q='+encodeURIComponent(this.q.value);return false"><input name="q" aria-label="खोज" placeholder="खोज्नुहोस्"><button>खोज</button></form>`})}
-async function post(slug){const{data:p}=await sb.from('posts').select(SEL).eq('slug',slug).maybeSingle();if(!p)return nf();
-seo(p.seo_title||p.title,p.seo_description||p.excerpt);sb.rpc('add_view',{p_post:p.id});
-const vid=localStorage.gnv||(localStorage.gnv=crypto.randomUUID());
-const[lc,cm,rl]=await Promise.all([sb.rpc('like_count',{p_post:p.id}),sb.from('comments').select('*').eq('post_id',p.id).order('created_at'),sb.from('posts').select(SEL).eq('category_id',p.category_id).neq('id',p.id).order('published_at',{ascending:false}).limit(3)]);
-const u=location.href;ST.p=p;ST.u=u;
-A.innerHTML=`${await ad('post_before')}<article class="w art"><a class="cat" href="#/c/${E(p.categories?.slug)}">${E(p.categories?.name||'')}</a><h1>${E(p.title)}</h1><p>${E(p.excerpt||'')}</p>
-<div class="m">प्रकाशित ${D(p.published_at)} · अद्यावधिक ${D(p.updated_at)}${p.reading_time?' · '+p.reading_time+' मिनेट':''}</div>
-${p.thumbnail?`<img alt="${E(p.title)}" src="${E(p.thumbnail)}">`:''}<div>${p.content}</div>
-${p.source_name||p.last_verified_at?`<p class="callout">${p.source_name?'स्रोत: '+(p.source_url?`<a href="${E(p.source_url)}" rel="noopener" target="_blank">${E(p.source_name)}</a>`:E(p.source_name)):''}${p.last_verified_at?'<br>अन्तिम जाँच: '+D(p.last_verified_at):''}</p>`:''}
-${await ad('post_after')}
-<div class="row"><button id="lk" onclick="like()">👍 Like (<span id="lc">${lc.data||0}</span>)</button><button class="o" onclick="shr('fb')">Facebook</button><button class="o" onclick="shr('wa')">WhatsApp</button><button class="o" onclick="shr('cp')">Copy Link</button>${navigator.share?'<button class="o" onclick="shr(\'ns\')">Share</button>':''}</div>
-<h2>प्रतिक्रिया</h2>${cm.data?.length?cm.data.map(c=>`<div class="cm"><b>${E(c.name)}</b> <span class="m">${D(c.created_at)}</span><br>${E(c.comment)}</div>`).join(''):em('अहिलेसम्म कुनै प्रतिक्रिया छैन।')}
-<form onsubmit="return cmt(this)" style="margin-top:12px"><input name="name" required maxlength="60" placeholder="नाम" aria-label="नाम"><br><br><input name="email" type="email" placeholder="इमेल (ऐच्छिक)" aria-label="इमेल"><br><br><textarea name="c" required maxlength="1000" rows="3" placeholder="तपाईंको प्रतिक्रिया" aria-label="प्रतिक्रिया"></textarea><input class="hp" name="website" tabindex="-1" autocomplete="off"><br><button>पठाउनुहोस्</button><p class="m" id="cmsg">प्रतिक्रिया स्वीकृत भएपछि देखिन्छ।</p></form>
-<h2>यो पनि उपयोगी हुन सक्छ</h2>${rl.data?.length?rl.data.map(card).join(''):em('अहिले अरू गाइड छैन।')}</article>`;
-if(localStorage['l'+p.id])document.getElementById('lk').disabled=true}
-async function like(){const{p}=ST;if(localStorage['l'+p.id])return;const{data}=await sb.rpc('like_post',{p_post:p.id,p_visitor:localStorage.gnv});localStorage['l'+p.id]=1;lc.textContent=data;lk.disabled=true}
-function shr(t){const{p,u}=ST;if(t=='fb')open('https://www.facebook.com/sharer/sharer.php?u='+encodeURIComponent(u));if(t=='wa')open('https://wa.me/?text='+encodeURIComponent(p.title+' '+u));
-if(t=='cp')navigator.clipboard.writeText(u).then(()=>alert('लिङ्क कपी भयो'));if(t=='ns')navigator.share({title:p.title,url:u})}
-async function cmt(f){if(f.website.value)return false;if(Date.now()-(+localStorage.gnc||0)<30000){cmsg.textContent='कृपया केही बेर पर्खनुहोस्।';return false}
-const{error}=await sb.from('comments').insert({post_id:ST.p.id,name:f.name.value.trim(),email:f.email.value||null,comment:f.c.value.trim(),status:'pending'});
-localStorage.gnc=Date.now();cmsg.textContent=error?'पठाउन सकिएन, फेरि प्रयास गर्नुहोस्।':'धन्यवाद! प्रतिक्रिया स्वीकृतिको लागि पठाइयो।';if(!error)f.reset();return false}
-const DEF={disclaimer:`<p>Guide Nepal एक स्वतन्त्र जानकारी प्लेटफर्म हो। यो सरकारी निकाय, अदालत, कानुन फर्म वा सरकारी विभाग होइन।</p><p>सरकारी प्रक्रिया, शुल्क, कानुन र आवश्यकताहरू परिवर्तन हुन सक्छन्। महत्त्वपूर्ण जानकारी सम्बन्धित आधिकारिक निकायबाट पुष्टि गर्नुहोस्।</p><p>गम्भीर कानुनी विषयमा योग्य पेशेवर वा सम्बन्धित निकायसँग सल्लाह लिनुहोस्।</p>`};
-const PT={about:'हाम्रो बारेमा',privacy:'गोपनीयता नीति',terms:'सर्त तथा नियम',disclaimer:'अस्वीकरण',contact:'सम्पर्क'};
-async function page(k){seo(PT[k]);const h=ST.s['page_'+k]||DEF[k]||'';
-A.innerHTML=`<div class="w art"><h1>${PT[k]}</h1>${h||em('यो पृष्ठको सामग्री छिट्टै थपिनेछ।')}${k=='contact'?`<h2>जानकारीमा गल्ती भेट्नुभयो?</h2><p>पुरानो वा गलत जानकारी देख्नुभयो भने हामीलाई जानकारी दिनुहोस्।</p>${ST.s.contact_email?`<form onsubmit="location.href='mailto:${E(ST.s.contact_email)}?subject='+encodeURIComponent(this.s.value)+'&body='+encodeURIComponent(this.m.value+'\\n\\n'+this.n.value);return false"><input name="n" required placeholder="नाम" aria-label="नाम"><br><br><input name="s" required placeholder="विषय" aria-label="विषय"><br><br><textarea name="m" required rows="4" placeholder="सन्देश" aria-label="सन्देश"></textarea><br><button>पठाउनुहोस्</button></form>`:''}`:''}</div>`}
-const nf=()=>{A.innerHTML=`<div class="w" style="text-align:center;padding:60px 0"><h1>यो पृष्ठ भेटिएन।</h1><a class="btn" href="#/">होमपेजमा फर्कनुहोस्</a></div>`};
-async function route(){const[path,qs]=(location.hash.slice(1)||'/').split('?'),q=new URLSearchParams(qs||''),s=path.split('/').filter(Boolean);scrollTo(0,0);
-try{if(!ST.s){const{data}=await sb.from('site_settings').select('*');ST.s=Object.fromEntries((data||[]).map(r=>[r.key,r.value]));
-ft.innerHTML=['facebook','tiktok','youtube'].filter(k=>ST.s[k]).map(k=>`<a href="${E(ST.s[k])}" target="_blank" rel="noopener">${k}</a>`).join('')}
-const k=s[0];if(!k)await home();else if(k=='guides')await guides(q);else if(k=='categories')await cats();else if(k=='c')await cat(s[1],q.get('p'));
-else if(k=='p')await post(s[1]);else if(k=='search'){seo('खोज');await list('खोज: '+E(q.get('q')),{q:q.get('q'),p:q.get('p'),empty:'तपाईंले खोज्नुभएको जानकारी भेटिएन।'})}
-else if(PT[k])await page(k);else nf()}catch(e){console.error(e);A.innerHTML=`<div class="w" style="padding:40px 0"><h1>केही समस्या भयो।</h1><p>कृपया केही बेरपछि फेरि प्रयास गर्नुहोस्।</p></div>`}}
-addEventListener('hashchange',route);route();
-</script></body></html>
+const S={home:['गृहपृष्ठ','Home'],cats:['श्रेणीहरू','Categories'],imp:['महत्त्वपूर्ण','Important'],all:['सबै गाइडहरू','All Guides'],about:['हाम्रो बारेमा','About'],contact:['सम्पर्क','Contact'],privacy:['गोपनीयता नीति','Privacy Policy'],terms:['सर्त तथा नियम','Terms'],disclaimer:['अस्वीकरण','Disclaimer'],
+hh:['नेपाल बुझ्न सजिलो बनाऔँ।','Making Nepal easy to understand.'],hp:['सरकारी सेवा, कानुन, अधिकार, रोजगारी, शिक्षा, सुरक्षा र दैनिक जीवनका उपयोगी जानकारी सरल भाषामा।','Government services, law, rights, jobs, education and safety — in simple language.'],ph:['तपाईं के खोज्दै हुनुहुन्छ?','What are you looking for?'],go:['खोज्नुहोस्','Search'],
+it:['महत्त्वपूर्ण जानकारी','Important Information'],lt:['नयाँ जानकारी','Latest Information'],ni:['हाल कुनै महत्त्वपूर्ण सूचना छैन।','No important notices right now.'],np:['अहिले कुनै जानकारी प्रकाशित गरिएको छैन।','No guides published yet.'],nc:['अहिले कुनै श्रेणी छैन।','No categories yet.'],ncp:['यस श्रेणीमा अहिले कुनै गाइड छैन।','No guides in this category yet.'],nr:['तपाईंले खोज्नुभएको जानकारी भेटिएन।','No results found.'],
+ex:['सबै गाइडहरू हेर्नुहोस्','Explore all guides'],rd:['पढ्नुहोस्','Read'],min:['मिनेट','min'],pub:['प्रकाशित','Published'],upd:['अद्यावधिक','Updated'],src:['स्रोत','Source'],ver:['अन्तिम जाँच','Last verified'],ad:['विज्ञापन','Advertisement'],
+rel:['यो पनि उपयोगी हुन सक्छ','You may also find useful'],cm:['प्रतिक्रिया','Comments'],nocm:['अहिलेसम्म कुनै प्रतिक्रिया छैन।','No comments yet.'],nm:['नाम','Name'],em:['इमेल (ऐच्छिक)','Email (optional)'],yc:['तपाईंको प्रतिक्रिया','Your comment'],snd:['पठाउनुहोस्','Send'],cmok:['धन्यवाद! प्रतिक्रिया स्वीकृतिको लागि पठाइयो।','Thanks! Your comment is awaiting approval.'],cmn:['प्रतिक्रिया स्वीकृत भएपछि देखिन्छ।','Comments appear after approval.'],wait:['कृपया केही बेर पर्खनुहोस्।','Please wait a moment.'],cmerr:['पठाउन सकिएन।','Could not send.'],cpd:['लिङ्क कपी भयो','Link copied'],cl:['लिङ्क कपी','Copy link'],
+nf:['यो पृष्ठ भेटिएन।','Page not found.'],bk:['होमपेजमा फर्कनुहोस्','Back to home'],er:['केही समस्या भयो। केही बेरपछि फेरि प्रयास गर्नुहोस्।','Something went wrong. Please try again.'],prev:['← अघिल्लो','← Previous'],next:['अर्को →','Next →'],allc:['सबै श्रेणी','All categories'],
+tag:['सरल जानकारी। सही प्रक्रिया। सजिलो समाधान।','Simple information. Right process. Easy solutions.'],f1:['खोज्नुहोस्','Explore'],f2:['जानकारी','Info'],f3:['हामीलाई फलो गर्नुहोस्','Follow us'],soon:['यो पृष्ठको सामग्री छिट्टै थपिनेछ।','Content coming soon.'],
+rep:['जानकारीमा गल्ती भेट्नुभयो?','Found wrong information?'],rept:['पुरानो वा गलत जानकारी देख्नुभयो भने हामीलाई जानकारी दिनुहोस्।','Tell us if something is outdated or incorrect.'],sub:['विषय','Subject'],msg:['सन्देश','Message']};
+const t=k=>S[k][L=='en'?1:0],pk=(o,k)=>(L=='en'&&o[k+'_en'])||o[k]||'';
+const D=d=>d?new Date(d).toLocaleDateString(L=='en'?'en-GB':'ne-NP'):'';
+const em=k=>`<div class="empty">${t(k)}</div>`,W='max-w-4xl mx-auto px-4';
